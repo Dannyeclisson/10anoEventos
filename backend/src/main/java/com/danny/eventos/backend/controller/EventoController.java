@@ -1,7 +1,9 @@
 package com.danny.eventos.backend.controller;
 
-import com.danny.eventos.backend.model.Evento;
+import com.danny.eventos.backend.dto.EventoRequest;
+import com.danny.eventos.backend.dto.EventoResponse;
 import com.danny.eventos.backend.service.EventoService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +19,12 @@ public class EventoController {
     }
 
     @PostMapping
-    public Evento criar(@RequestBody Evento evento) {
-        return service.salvar(evento);
+    public EventoResponse criar(@Valid @RequestBody EventoRequest request) {
+        return service.salvar(request);
     }
 
     @GetMapping
-    public List<Evento> listar() {
+    public List<EventoResponse> listar() {
         return service.listar();
     }
 }
