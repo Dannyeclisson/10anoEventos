@@ -1,0 +1,40 @@
+.login-page {
+  display: grid;
+  min-height: calc(100vh - 72px);
+  align-items: center;
+  padding: 48px 0;
+}
+
+.login-card {
+  width: min(100%, 460px);
+  margin: 0 auto;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  box-shadow: var(--app-shadow);
+}
+
+mat-card-header {
+  padding: 24px 24px 8px;
+}
+
+mat-card-content {
+  padding: 16px 24px 8px;
+}
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+button[type='submit'] {
+  min-height: 44px;
+}
+
+button[type='submit'] mat-spinner {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+mat-card-actions {
+  padding: 0 16px 18px;
+}

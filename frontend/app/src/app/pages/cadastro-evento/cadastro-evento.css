@@ -1,0 +1,82 @@
+.form-page {
+  padding: 56px 0 88px;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--app-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.form-card {
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.form-card mat-card-content {
+  padding: 24px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.full-span {
+  grid-column: 1 / -1;
+}
+
+.organizer-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  color: var(--app-text-muted);
+}
+
+.organizer-note mat-icon {
+  color: var(--app-primary);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.form-actions button {
+  min-width: 180px;
+}
+
+.form-actions mat-spinner {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+@media (max-width: 720px) {
+  .form-page {
+    padding: 36px 0 64px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

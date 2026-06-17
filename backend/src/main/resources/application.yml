@@ -11,3 +11,13 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+app:
+  jwt:
+    # Em producao, sobrescreva por variavel de ambiente: APP_JWT_SECRET.
+    secret: ${APP_JWT_SECRET:troque-este-segredo-em-producao}
+    expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
+  auth:
+    cookie-name: ${APP_AUTH_COOKIE_NAME:AUTH_TOKEN}
+    cookie-secure: ${APP_AUTH_COOKIE_SECURE:false}
+    cookie-same-site: ${APP_AUTH_COOKIE_SAME_SITE:Lax}

@@ -1,0 +1,19 @@
+.my-events-page {
+  padding: 64px 0 88px;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--app-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .my-events-page {
+    padding: 42px 0 64px;
+  }
+}

@@ -1,0 +1,15 @@
+<mat-form-field appearance="outline">
+  <mat-label>{{ label }}</mat-label>
+  <input
+    matInput
+    [matDatepicker]="picker"
+    [formControl]="control"
+    (blur)="markTouched()"
+  >
+  <mat-hint>{{ hint }}</mat-hint>
+  <mat-datepicker-toggle matIconSuffix [for]="picker" />
+  <mat-datepicker #picker />
+  @if (showRequiredError) {
+    <mat-error>{{ requiredError }}</mat-error>
+  }
+</mat-form-field>

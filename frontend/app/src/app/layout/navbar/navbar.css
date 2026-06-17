@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  position: sticky;
+  z-index: 20;
+  top: 0;
+}
+
+.navbar {
+  height: 72px;
+  padding: 0 max(24px, calc((100vw - 1180px) / 2));
+  border-bottom: 1px solid rgba(223, 229, 240, 0.85);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--app-text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.brand > span:last-child span {
+  color: var(--app-primary);
+}
+
+.brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--app-primary), var(--app-accent));
+  color: white;
+}
+
+.desktop-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.user-greeting {
+  margin-left: auto;
+  color: var(--app-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.user-greeting + .desktop-nav {
+  margin-left: 16px;
+}
+
+.desktop-nav a {
+  color: var(--app-text-muted);
+}
+
+.desktop-nav .active-link {
+  background: #edf1ff;
+  color: var(--app-primary-dark);
+}
+
+.mobile-menu {
+  display: none;
+  margin-left: auto;
+}
+
+@media (max-width: 820px) {
+  .navbar {
+    height: 64px;
+    padding-inline: 16px;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-menu {
+    display: inline-flex;
+  }
+}

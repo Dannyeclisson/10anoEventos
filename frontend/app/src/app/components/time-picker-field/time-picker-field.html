@@ -1,0 +1,15 @@
+<mat-form-field appearance="outline">
+  <mat-label>{{ label }}</mat-label>
+  <input
+    matInput
+    [matTimepicker]="picker"
+    [formControl]="control"
+    (blur)="markTouched()"
+  >
+  <mat-hint>{{ hint }}</mat-hint>
+  <mat-timepicker-toggle matIconSuffix [for]="picker" />
+  <mat-timepicker #picker />
+  @if (showRequiredError) {
+    <mat-error>{{ requiredError }}</mat-error>
+  }
+</mat-form-field>

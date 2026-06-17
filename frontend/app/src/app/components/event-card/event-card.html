@@ -1,0 +1,60 @@
+<mat-card class="event-card">
+  <div class="image-wrap">
+    <img
+      mat-card-image
+      [src]="evento.imagem"
+      [alt]="'Imagem do evento ' + evento.nome"
+      (error)="handleImageError($event)"
+    >
+    <mat-chip class="category-chip">{{ evento.categoria }}</mat-chip>
+  </div>
+
+  <mat-card-header>
+    <mat-card-title>{{ evento.nome }}</mat-card-title>
+    <mat-card-subtitle>Por {{ evento.organizadorNome }}</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <p class="description">{{ evento.descricao }}</p>
+
+    <div class="event-info">
+      <div>
+        <mat-icon>calendar_today</mat-icon>
+        <span>{{ evento.data | date: 'dd MMM yyyy, HH:mm' }}</span>
+      </div>
+      <div>
+        <mat-icon>location_on</mat-icon>
+        <span>{{ evento.local }}</span>
+      </div>
+      @if (exibirParticipantes) {
+        <div>
+          <mat-icon>group</mat-icon>
+          <span>{{ evento.participantes }} participantes</span>
+        </div>
+      }
+    </div>
+
+    @if (exibirStatus) {
+      <mat-chip class="status-chip">
+        <mat-icon matChipAvatar>check_circle</mat-icon>
+        Presença confirmada
+      </mat-chip>
+    }
+  </mat-card-content>
+
+  <mat-card-actions align="end">
+    <button mat-button type="button" (click)="visualizar.emit(evento)">
+      Visualizar
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      [class.cancel-action]="modo === 'confirmado'"
+      [disabled]="acaoDesabilitada"
+      (click)="acao.emit(evento)"
+    >
+      <mat-icon>{{ modo === 'confirmado' ? 'event_busy' : 'add_task' }}</mat-icon>
+      {{ acaoDesabilitada ? 'Confirmado' : textoAcao }}
+    </button>
+  </mat-card-actions>
+</mat-card>

@@ -1,17 +1,31 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 
-import { Eventos } from './eventos';
+import { EventoService } from '../../services/evento.service';
+import { EventosComponent } from './eventos';
 
-describe('Eventos', () => {
-  let component: Eventos;
-  let fixture: ComponentFixture<Eventos>;
+describe('EventosComponent', () => {
+  let component: EventosComponent;
+  let fixture: ComponentFixture<EventosComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Eventos],
+      imports: [EventosComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: EventoService,
+          useValue: {
+            confirmados$: of([]),
+            listar: () => of({ eventos: [] }),
+            confirmarParticipacao: () => undefined
+          }
+        }
+      ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Eventos);
+    fixture = TestBed.createComponent(EventosComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

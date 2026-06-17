@@ -1,0 +1,62 @@
+<section class="profile-page">
+  <div class="page-container">
+    @if (loadingUsuario) {
+      <div class="feedback-panel" aria-live="polite">
+        <mat-spinner diameter="44" />
+        <p>Carregando perfil...</p>
+      </div>
+    } @else if (usuario) {
+      <app-profile-info-card [usuario]="usuario" />
+
+      <div class="stats-grid" aria-label="Estatisticas do perfil">
+        <app-stats-card
+          label="Total de eventos participados"
+          [valor]="totalParticipados"
+          icone="emoji_events"
+        />
+        <app-stats-card
+          label="Eventos confirmados"
+          [valor]="confirmados.length"
+          icone="event_available"
+          tom="success"
+        />
+        <app-stats-card
+          label="Eventos cancelados"
+          [valor]="desistencias"
+          icone="event_busy"
+          tom="neutral"
+        />
+      </div>
+
+      <mat-card class="history-card">
+        <mat-card-header>
+          <mat-card-title>Eventos participados</mat-card-title>
+          <mat-card-subtitle>Sua atividade mais recente na plataforma</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (confirmados.length) {
+            <mat-list>
+              @for (evento of confirmados; track evento.id) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>event</mat-icon>
+                  <span matListItemTitle>{{ evento.nome }}</span>
+                  <span matListItemLine>{{ evento.local }} - Presenca confirmada</span>
+                </mat-list-item>
+              }
+            </mat-list>
+          } @else {
+            <div class="history-empty">
+              <mat-icon>history</mat-icon>
+              <p>Seus proximos eventos confirmados aparecerao aqui.</p>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <p class="privacy-note">
+        <mat-icon>lock</mat-icon>
+        Senhas e hashes de senha nunca sao exibidos nesta pagina.
+      </p>
+    }
+  </div>
+</section>

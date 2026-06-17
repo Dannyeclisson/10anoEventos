@@ -1,0 +1,28 @@
+.app-content {
+  min-height: calc(100vh - 144px);
+}
+
+footer {
+  padding: 28px 0;
+  border-top: 1px solid var(--app-border);
+  background: white;
+  color: var(--app-text-muted);
+  font-size: 0.85rem;
+}
+
+footer .page-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+footer span:first-child {
+  color: var(--app-primary-dark);
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  footer .page-container {
+    flex-direction: column;
+  }
+}

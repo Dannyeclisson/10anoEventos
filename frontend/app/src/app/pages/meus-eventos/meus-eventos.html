@@ -1,0 +1,38 @@
+<section class="my-events-page">
+  <div class="page-container">
+    <header class="page-header">
+      <span class="eyebrow">Sua agenda</span>
+      <h1>Meus Eventos</h1>
+      <p>
+        Acompanhe os eventos em que sua presença está confirmada e mantenha sua
+        agenda comunitária organizada.
+      </p>
+    </header>
+
+    @if (confirmados$ | async; as eventos) {
+      @if (eventos.length) {
+        <div class="event-grid">
+          @for (evento of eventos; track evento.id) {
+            <app-event-card
+              [evento]="evento"
+              modo="confirmado"
+              textoAcao="Desistir"
+              [exibirStatus]="true"
+              [exibirParticipantes]="false"
+              (visualizar)="viewDetails($event)"
+              (acao)="cancelParticipation($event)"
+            />
+          }
+        </div>
+      } @else {
+        <app-empty-state
+          titulo="Sua agenda ainda está livre"
+          mensagem="Explore os eventos disponíveis e confirme sua presença para começar a construir sua agenda comunitária."
+          textoBotao="Ver Eventos Confirmados"
+          icone="event_available"
+          (acao)="exploreEvents()"
+        />
+      }
+    }
+  </div>
+</section>

@@ -1,1 +1,102 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --app-primary: #3157c8;
+  --app-primary-dark: #233f9b;
+  --app-accent: #7455d9;
+  --app-surface: #ffffff;
+  --app-surface-soft: #f5f7fc;
+  --app-text: #172033;
+  --app-text-muted: #5f6b82;
+  --app-border: #dfe5f0;
+  --app-success: #1f7a4d;
+  --app-warning: #9a5b00;
+  --app-shadow: 0 16px 40px rgba(42, 55, 91, 0.1);
+  color-scheme: light;
+  font-family: 'Inter', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--app-surface-soft);
+  color: var(--app-text);
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+.page-container {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  line-height: 1.15;
+}
+
+.page-header p {
+  max-width: 700px;
+  margin: 0;
+  color: var(--app-text-muted);
+  line-height: 1.7;
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.feedback-panel {
+  display: grid;
+  min-height: 280px;
+  place-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.feedback-panel p {
+  margin: 0;
+  color: var(--app-text-muted);
+}
+
+@media (max-width: 960px) {
+  .event-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .page-container {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
+}

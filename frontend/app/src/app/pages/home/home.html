@@ -1,0 +1,89 @@
+<section class="hero">
+  <div class="page-container hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">
+        <mat-icon>hub</mat-icon>
+        Comunidade que realiza
+      </span>
+      <h1>Boas conexões fazem grandes eventos acontecerem.</h1>
+      <p>
+        Uma plataforma para gerenciamento e participação de eventos
+        comunitários, aqui você encontra parcerias para fornecimento de insumos
+        e organização do seu evento.
+      </p>
+      <div class="hero-actions">
+        <a mat-flat-button routerLink="/eventos">
+          Explorar Eventos
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
+        <a mat-stroked-button routerLink="/cadastro-evento">
+          <mat-icon>add</mat-icon>
+          Criar Evento
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-label="Ilustração de colaboração comunitária">
+      <div class="visual-glow"></div>
+      <mat-card class="main-event-card">
+        <mat-card-content>
+          <div class="event-topline">
+            <span class="event-icon"><mat-icon>festival</mat-icon></span>
+            <span class="live-dot">Próximo evento</span>
+          </div>
+          <strong>Encontro da Comunidade</strong>
+          <p><mat-icon>location_on</mat-icon> Praça Central</p>
+          <div class="attendees">
+            <span class="avatar">MC</span>
+            <span class="avatar">RL</span>
+            <span class="avatar">AS</span>
+            <span class="avatar more">+42</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="floating-card partners">
+        <mat-icon>handshake</mat-icon>
+        <span><strong>12 parceiros</strong> conectados</span>
+      </mat-card>
+      <mat-card class="floating-card confirmed">
+        <mat-icon>check_circle</mat-icon>
+        <span><strong>Presença</strong> confirmada</span>
+      </mat-card>
+    </div>
+  </div>
+</section>
+
+<section class="benefits">
+  <div class="page-container">
+    <div class="section-heading">
+      <span>Feito para colaborar</span>
+      <h2>Tudo o que sua comunidade precisa para se mobilizar</h2>
+      <p>
+        Recursos simples para aproximar pessoas, organizar iniciativas e
+        ampliar o impacto de cada encontro.
+      </p>
+    </div>
+    <div class="benefit-grid">
+      @for (benefit of benefits; track benefit.titulo) {
+        <app-benefit-card
+          [titulo]="benefit.titulo"
+          [descricao]="benefit.descricao"
+          [icone]="benefit.icone"
+        />
+      }
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="page-container">
+    <div>
+      <h2>Encontre seu próximo evento comunitário</h2>
+      <p>Participe, colabore e ajude boas iniciativas a ganharem vida.</p>
+    </div>
+    <a mat-flat-button routerLink="/eventos">
+      Ver eventos disponíveis
+      <mat-icon>event_available</mat-icon>
+    </a>
+  </div>
+</section>

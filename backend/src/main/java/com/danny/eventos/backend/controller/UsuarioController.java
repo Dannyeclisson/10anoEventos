@@ -1,7 +1,11 @@
 package com.danny.eventos.backend.controller;
 
-import com.danny.eventos.backend.model.Usuario;
+import com.danny.eventos.backend.dto.UsuarioCadastroDTO;
+import com.danny.eventos.backend.dto.UsuarioResponseDTO;
 import com.danny.eventos.backend.service.UsuarioService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +21,21 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public Usuario criar(@RequestBody Usuario usuario) {
-        return service.salvar(usuario);
+    public ResponseEntity<UsuarioResponseDTO> criar(@Valid @RequestBody UsuarioCadastroDTO request) {
+        UsuarioResponseDTO usuario = service.cadastrar(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(usuario);
     }
 
     @GetMapping
-    public List<Usuario> listar() {
+    public List<UsuarioResponseDTO> listar() {
         return service.listar();
+    }
+
+    @GetMapping("/{id}")
+    public UsuarioResponseDTO buscarPorId(@PathVariable Long id) {
+        return service.buscarPorId(id);
     }
 }

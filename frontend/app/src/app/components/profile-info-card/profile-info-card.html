@@ -1,0 +1,41 @@
+<mat-card>
+  <mat-card-content>
+    <div class="profile-heading">
+      <img [src]="usuario.foto" [alt]="'Foto de ' + usuario.nome">
+      <div>
+        <span class="eyebrow">Perfil da comunidade</span>
+        <h1>{{ usuario.nome }}</h1>
+        <p>{{ usuario.email }}</p>
+      </div>
+      <button mat-stroked-button type="button">
+        <mat-icon>edit</mat-icon>
+        Editar Perfil
+      </button>
+    </div>
+
+    <mat-divider />
+
+    <div class="details-grid">
+      <div>
+        <mat-icon>cake</mat-icon>
+        <span><small>Data de nascimento</small>{{ usuario.dataNascimento }}</span>
+      </div>
+      <div>
+        <mat-icon>badge</mat-icon>
+        <span><small>CPF</small>{{ usuario.cpf }}</span>
+      </div>
+      <div>
+        <mat-icon>phone</mat-icon>
+        <span><small>Telefone</small>{{ usuario.telefone }}</span>
+      </div>
+      <div>
+        <mat-icon>alternate_email</mat-icon>
+        <span><small>Email</small>{{ usuario.email }}</span>
+      </div>
+      <div>
+        <mat-icon>verified_user</mat-icon>
+        <span><small>Tipo de usuario</small>{{ usuario.tipo }}</span>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

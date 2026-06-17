@@ -1,0 +1,73 @@
+<mat-toolbar class="navbar" aria-label="Navegacao principal">
+  <a class="brand" routerLink="/home" aria-label="10anosEventos - inicio">
+    <span>10anos<span>Eventos</span></span>
+  </a>
+
+  @if (usuario$ | async; as usuario) {
+    <span class="user-greeting">Ola, {{ usuario.nome }}</span>
+
+    <nav class="desktop-nav" aria-label="Paginas da plataforma">
+      @for (item of privateNavigation; track item.path) {
+        <a
+          mat-button
+          [routerLink]="item.path"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: item.path === '/home' }"
+        >
+          {{ item.label }}
+        </a>
+      }
+      <button mat-button type="button" (click)="logout()">
+        Sair
+      </button>
+    </nav>
+  } @else {
+    <nav class="desktop-nav" aria-label="Paginas da plataforma">
+      @for (item of publicNavigation; track item.path) {
+        <a
+          mat-button
+          [routerLink]="item.path"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: item.path === '/home' }"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  }
+
+  <button
+    mat-icon-button
+    class="mobile-menu"
+    [matMenuTriggerFor]="menu"
+    aria-label="Abrir menu de navegacao"
+  >
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+
+<mat-menu #menu="matMenu">
+  @if (usuario$ | async; as usuario) {
+    <button mat-menu-item disabled>
+      <mat-icon>person</mat-icon>
+      <span>Ola, {{ usuario.nome }}</span>
+    </button>
+    @for (item of privateNavigation; track item.path) {
+      <a mat-menu-item [routerLink]="item.path">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+    <button mat-menu-item type="button" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Sair</span>
+    </button>
+  } @else {
+    @for (item of publicNavigation; track item.path) {
+      <a mat-menu-item [routerLink]="item.path">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  }
+</mat-menu>
