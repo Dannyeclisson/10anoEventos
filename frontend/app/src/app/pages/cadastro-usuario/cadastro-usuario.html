@@ -40,7 +40,7 @@
 
             <app-date-picker-field
               formControlName="dataNascimento"
-              label="Data de nascimento"
+              label="Data de nascimento *"
               requiredError="Data obrigatoria"
             />
 
@@ -57,18 +57,6 @@
               <input matInput formControlName="telefone" autocomplete="tel">
               @if (form.controls.telefone.hasError('required')) {
                 <mat-error>Telefone obrigatorio</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Tipo de usuario</mat-label>
-              <mat-select formControlName="tipo">
-                @for (tipo of tipos; track tipo.value) {
-                  <mat-option [value]="tipo.value">{{ tipo.label }}</mat-option>
-                }
-              </mat-select>
-              @if (form.controls.tipo.hasError('required')) {
-                <mat-error>Tipo obrigatorio</mat-error>
               }
             </mat-form-field>
           </div>

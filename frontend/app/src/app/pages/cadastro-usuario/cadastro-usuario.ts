@@ -11,7 +11,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { DatePickerFieldComponent } from '../../components/date-picker-field/date-picker-field';
 import { UsuarioCadastroRequest } from '../../models/usuario.model';
@@ -28,7 +27,6 @@ import { UsuarioService } from '../../services/usuario.service';
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
-    MatSelectModule,
     MatSnackBarModule,
     ReactiveFormsModule
   ],
@@ -43,20 +41,13 @@ export class CadastroUsuarioComponent {
 
   loading = false;
 
-  readonly tipos = [
-    { value: 'ORGANIZADOR', label: 'Organizador' },
-    { value: 'PARTICIPANTE', label: 'Participante' },
-    { value: 'COLABORADOR', label: 'Colaborador' }
-  ] as const;
-
   readonly form = this.fb.nonNullable.group({
     nome: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     senha: ['', [Validators.required, Validators.minLength(8)]],
     dataNascimento: ['', Validators.required],
     cpf: ['', Validators.required],
-    telefone: ['', Validators.required],
-    tipo: ['PARTICIPANTE' as UsuarioCadastroRequest['tipo'], Validators.required]
+    telefone: ['', Validators.required]
   });
 
   submit(): void {
@@ -77,8 +68,7 @@ export class CadastroUsuarioComponent {
           senha: '',
           dataNascimento: '',
           cpf: '',
-          telefone: '',
-          tipo: 'PARTICIPANTE'
+          telefone: ''
         });
         this.snackBar.open('Usuario cadastrado com sucesso.', 'Fechar', {
           duration: 4000

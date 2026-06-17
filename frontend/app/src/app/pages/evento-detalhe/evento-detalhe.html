@@ -1,0 +1,164 @@
+<section class="event-detail-page">
+  <div class="page-container">
+    @if (loading) {
+      <div class="feedback-panel" aria-live="polite">
+        <mat-spinner diameter="44" />
+        <p>Carregando evento...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="api-notice" role="alert">
+        <mat-icon>cloud_off</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+    } @else if (evento) {
+      <header class="detail-header">
+        <button mat-button type="button" routerLink="/eventos">
+          <mat-icon>arrow_back</mat-icon>
+          Eventos
+        </button>
+        <span class="eyebrow">Detalhes do evento</span>
+        <h1>{{ evento.nome }}</h1>
+        <p>{{ evento.descricao }}</p>
+      </header>
+
+      <div class="detail-layout">
+        <mat-card class="event-summary">
+          <mat-card-content>
+            <div class="summary-grid">
+              <div>
+                <mat-icon>location_on</mat-icon>
+                <span>{{ evento.local }}</span>
+              </div>
+              <div>
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ evento.dataHora | date: 'dd MMM yyyy, HH:mm' }}</span>
+              </div>
+              <div>
+                <mat-icon>verified_user</mat-icon>
+                <span>{{ evento.organizadorNome || 'Organizador nao informado' }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="participation-card">
+          <mat-card-header>
+            <mat-card-title>Como voce deseja participar deste evento?</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (usuarioJaVinculado()) {
+              <div class="linked-state">
+                <mat-icon>check_circle</mat-icon>
+                <span>Voce ja possui vinculo com este evento.</span>
+              </div>
+            } @else {
+              <form [formGroup]="form" (ngSubmit)="confirmarParticipacao()">
+                <mat-radio-group
+                  formControlName="tipoRelacao"
+                  aria-label="Selecione o tipo de participacao"
+                  class="participation-options"
+                >
+                  <mat-radio-button [value]="2">Colaborador</mat-radio-button>
+                  <mat-radio-button [value]="3">Participante</mat-radio-button>
+                </mat-radio-group>
+
+                <button mat-flat-button type="submit" [disabled]="submitting">
+                  @if (submitting) {
+                    <mat-spinner diameter="18" />
+                  } @else {
+                    <mat-icon>how_to_reg</mat-icon>
+                  }
+                  Confirmar participacao
+                </button>
+              </form>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <mat-card class="supplies-card">
+        <mat-card-header>
+          <mat-card-title>Insumos necessarios</mat-card-title>
+        </mat-card-header>
+        <mat-divider />
+        <mat-card-content>
+          @if (insumosAgrupados.length) {
+            <div class="supplies-groups">
+              @for (grupo of insumosAgrupados; track grupo.categoria) {
+                <section class="supply-group">
+                  <h3>{{ grupo.categoria }}</h3>
+                  @if (colaboradorSelecionado()) {
+                    <mat-selection-list class="supply-selection-list" aria-label="Selecione os insumos">
+                      @for (insumo of grupo.insumos; track insumo.id) {
+                        <mat-list-option
+                          [value]="insumo.id"
+                          [disabled]="insumoIndisponivel(insumo)"
+                          [selected]="insumoSelecionado(insumo.id)"
+                          (selectedChange)="atualizarSelecaoInsumo(insumo.id, $event)"
+                        >
+                          <div class="supply-option">
+                            <strong>{{ insumo.nome }}</strong>
+                            <span>{{ insumo.quantidade }} {{ insumo.unidadeMedida }}</span>
+                            @if (insumo.nomeResponsavel) {
+                              <small>Responsavel: {{ insumo.nomeResponsavel }}</small>
+                            } @else if (insumo.observacoes) {
+                              <small>{{ insumo.observacoes }}</small>
+                            }
+                          </div>
+                          <mat-chip>{{ insumo.status }}</mat-chip>
+                        </mat-list-option>
+                      }
+                    </mat-selection-list>
+                  } @else {
+                    <div class="supply-list">
+                      @for (insumo of grupo.insumos; track insumo.id) {
+                        <div class="supply-row">
+                          <div>
+                            <strong>{{ insumo.nome }}</strong>
+                            <span>{{ insumo.quantidade }} {{ insumo.unidadeMedida }}</span>
+                            @if (insumo.nomeResponsavel) {
+                              <small>Responsavel: {{ insumo.nomeResponsavel }}</small>
+                            } @else if (insumo.observacoes) {
+                              <small>{{ insumo.observacoes }}</small>
+                            }
+                          </div>
+                          <mat-chip>{{ insumo.status }}</mat-chip>
+                        </div>
+                      }
+                    </div>
+                  }
+                </section>
+              }
+            </div>
+          } @else {
+            <p class="empty-text">Nenhum insumo cadastrado para este evento.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="people-card">
+        <mat-card-header>
+          <mat-card-title>Participantes e equipe</mat-card-title>
+        </mat-card-header>
+        <mat-divider />
+        <mat-card-content>
+          @if (participacoes.length) {
+            <div class="people-list">
+              @for (relacao of participacoes; track relacao.id) {
+                <div class="person-row">
+                  <div>
+                    <strong>{{ relacao.nomeUsuario }}</strong>
+                    <span>{{ relacao.nomeEvento }}</span>
+                  </div>
+                  <mat-chip>{{ getTipoLabel(relacao.tipoRelacao) }}</mat-chip>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-text">Ainda nao ha vinculos registrados para este evento.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+</section>

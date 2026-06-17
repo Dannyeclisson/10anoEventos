@@ -1,5 +1,3 @@
-export type TipoUsuario = 'ORGANIZADOR' | 'PARTICIPANTE' | 'COLABORADOR';
-
 export interface UsuarioCadastroRequest {
   nome: string;
   email: string;
@@ -7,7 +5,6 @@ export interface UsuarioCadastroRequest {
   dataNascimento: string;
   cpf: string;
   telefone: string;
-  tipo: TipoUsuario;
 }
 
 export interface UsuarioResponse {
@@ -17,7 +14,6 @@ export interface UsuarioResponse {
   dataNascimento: string;
   cpf: string;
   telefone: string;
-  tipo: TipoUsuario;
 }
 
 export interface UsuarioPerfil extends UsuarioResponse {

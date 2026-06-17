@@ -57,6 +57,105 @@
             </p>
           </div>
 
+          <mat-divider />
+
+          <section class="supplies-section">
+            <div class="section-heading">
+              <span class="eyebrow">Planejamento</span>
+              <h2>Insumos do evento</h2>
+            </div>
+
+            <div class="insumo-form-grid" [formGroup]="insumoForm">
+              <mat-form-field appearance="outline">
+                <mat-label>Categoria</mat-label>
+                <mat-select formControlName="categoria">
+                  @for (categoria of categoriasInsumo; track categoria) {
+                    <mat-option [value]="categoria">{{ categoria }}</mat-option>
+                  }
+                </mat-select>
+                @if (insumoForm.controls.categoria.hasError('required')) {
+                  <mat-error>Categoria obrigatoria</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Nome do item</mat-label>
+                <input matInput formControlName="nome">
+                @if (insumoForm.controls.nome.hasError('required')) {
+                  <mat-error>Nome obrigatorio</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Quantidade</mat-label>
+                <input matInput type="number" min="0.01" step="0.01" formControlName="quantidade">
+                @if (insumoForm.controls.quantidade.hasError('required')) {
+                  <mat-error>Quantidade obrigatoria</mat-error>
+                } @else if (insumoForm.controls.quantidade.hasError('min')) {
+                  <mat-error>Informe um valor maior que zero</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Unidade de medida</mat-label>
+                <mat-select formControlName="unidadeMedida">
+                  @for (unidade of unidadesMedida; track unidade) {
+                    <mat-option [value]="unidade">{{ unidade }}</mat-option>
+                  }
+                </mat-select>
+                @if (insumoForm.controls.unidadeMedida.hasError('required')) {
+                  <mat-error>Unidade obrigatoria</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  @for (status of statusInsumo; track status) {
+                    <mat-option [value]="status">{{ status }}</mat-option>
+                  }
+                </mat-select>
+                @if (insumoForm.controls.status.hasError('required')) {
+                  <mat-error>Status obrigatorio</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Observacoes</mat-label>
+                <input matInput formControlName="observacoes">
+              </mat-form-field>
+
+              <div class="insumo-actions">
+                <button mat-stroked-button type="button" (click)="adicionarInsumo()">
+                  <mat-icon>playlist_add</mat-icon>
+                  Adicionar insumo
+                </button>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="chip-field">
+              <mat-label>Insumos cadastrados</mat-label>
+              <mat-chip-grid #chipGrid aria-label="Insumos cadastrados">
+                @for (insumoGroup of insumos.controls; track $index) {
+                  @let insumo = getInsumoValue(insumoGroup);
+                  <mat-chip-row (removed)="removerInsumo($index)">
+                    <span class="chip-title">{{ insumo.categoria }}: {{ insumo.nome }}</span>
+                    <span class="chip-meta">{{ insumo.quantidade }} {{ insumo.unidadeMedida }}</span>
+                    <button matChipRemove type="button" [attr.aria-label]="'Remover ' + insumo.nome">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-chip-row>
+                }
+                <input
+                  placeholder="Adicionar pelo nome"
+                  [matChipInputFor]="chipGrid"
+                  (matChipInputTokenEnd)="adicionarInsumoViaChip($event)"
+                >
+              </mat-chip-grid>
+              <mat-hint>Preencha os campos acima ou use este campo para informar rapidamente o nome.</mat-hint>
+            </mat-form-field>
+          </section>
+
           <div class="form-actions">
             <button mat-flat-button type="submit" [disabled]="loading">
               @if (loading) {

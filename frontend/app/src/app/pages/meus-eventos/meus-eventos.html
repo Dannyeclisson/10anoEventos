@@ -4,35 +4,72 @@
       <span class="eyebrow">Sua agenda</span>
       <h1>Meus Eventos</h1>
       <p>
-        Acompanhe os eventos em que sua presença está confirmada e mantenha sua
-        agenda comunitária organizada.
+        Acompanhe os eventos ligados ao seu usuario e o papel que voce exerce
+        em cada um deles.
       </p>
     </header>
 
-    @if (confirmados$ | async; as eventos) {
-      @if (eventos.length) {
-        <div class="event-grid">
-          @for (evento of eventos; track evento.id) {
-            <app-event-card
-              [evento]="evento"
-              modo="confirmado"
-              textoAcao="Desistir"
-              [exibirStatus]="true"
-              [exibirParticipantes]="false"
-              (visualizar)="viewDetails($event)"
-              (acao)="cancelParticipation($event)"
-            />
-          }
-        </div>
-      } @else {
-        <app-empty-state
-          titulo="Sua agenda ainda está livre"
-          mensagem="Explore os eventos disponíveis e confirme sua presença para começar a construir sua agenda comunitária."
-          textoBotao="Ver Eventos Confirmados"
-          icone="event_available"
-          (acao)="exploreEvents()"
-        />
-      }
+    @if (loading) {
+      <div class="feedback-panel" aria-live="polite">
+        <mat-spinner diameter="44" />
+        <p>Carregando seus eventos...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="api-notice" role="alert">
+        <mat-icon>cloud_off</mat-icon>
+        <span>{{ errorMessage }}</span>
+        <button mat-button type="button" (click)="loadEventos()">Tentar novamente</button>
+      </div>
+    } @else if (eventos.length) {
+      <div class="my-events-list">
+        @for (item of eventos; track item.relacao.id) {
+          <mat-card class="my-event-card">
+            <mat-card-header>
+              <mat-card-title>{{ item.evento?.nome || item.relacao.nomeEvento }}</mat-card-title>
+              <mat-card-subtitle>
+                {{ item.evento?.local || 'Local nao informado' }}
+              </mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <p>{{ item.evento?.descricao || 'Detalhes disponiveis na pagina do evento.' }}</p>
+              <div class="event-meta">
+                @if (item.evento?.dataHora) {
+                  <span>
+                    <mat-icon>calendar_today</mat-icon>
+                    {{ item.evento?.dataHora | date: 'dd MMM yyyy, HH:mm' }}
+                  </span>
+                }
+                <span>
+                  <mat-icon>badge</mat-icon>
+                  {{ item.relacao.nomeUsuario }}
+                </span>
+              </div>
+              <mat-chip>{{ getTipoLabel(item.relacao.tipoRelacao) }}</mat-chip>
+            </mat-card-content>
+
+            <mat-card-actions align="end">
+              <button mat-button type="button" (click)="viewDetails(item)">
+                Visualizar
+              </button>
+              @if (podeDesistir(item)) {
+                <button mat-flat-button type="button" class="cancel-action" (click)="cancelParticipation(item)">
+                  <mat-icon>event_busy</mat-icon>
+                  Desistir
+                </button>
+              }
+            </mat-card-actions>
+          </mat-card>
+        }
+      </div>
+    } @else {
+      <app-empty-state
+        titulo="Sua agenda ainda esta livre"
+        mensagem="Explore os eventos disponiveis e escolha se deseja atuar como colaborador ou participante."
+        textoBotao="Ver Eventos Confirmados"
+        icone="event_available"
+        (acao)="exploreEvents()"
+      />
     }
   </div>
 </section>

@@ -1,3 +1,8 @@
+import {
+  InsumoEventoRequest,
+  InsumoEventoResponse
+} from './insumo-evento.model';
+
 export type EventoId = number | string;
 
 export interface EventoCadastroRequest {
@@ -6,6 +11,7 @@ export interface EventoCadastroRequest {
   local: string;
   dataHora: string;
   organizadorId: number;
+  insumos?: InsumoEventoRequest[];
 }
 
 export interface EventoResponse {
@@ -16,6 +22,8 @@ export interface EventoResponse {
   dataHora: string;
   organizadorId?: number;
   organizadorNome?: string;
+  participantes?: number;
+  insumos?: InsumoEventoResponse[];
 }
 
 export interface Evento {

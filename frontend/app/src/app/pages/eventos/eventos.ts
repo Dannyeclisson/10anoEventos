@@ -11,11 +11,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { catchError, of, switchMap } from 'rxjs';
 import { EventCardComponent } from '../../components/event-card/event-card';
 import { Evento } from '../../models/evento.model';
+import { AuthService } from '../../services/auth.service';
 import { EventoService } from '../../services/evento.service';
+import { UsuarioEventoService } from '../../services/usuario-evento.service';
 
 @Component({
   selector: 'app-eventos',
@@ -37,24 +40,19 @@ export class EventosComponent implements OnInit {
   eventos: Evento[] = [];
   loading = true;
   errorMessage = '';
-  confirmados = new Set<string>();
+  eventosComVinculo = new Set<string>();
 
   constructor(
+    private readonly authService: AuthService,
     private readonly eventoService: EventoService,
-    private readonly snackBar: MatSnackBar,
+    private readonly usuarioEventoService: UsuarioEventoService,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef
-  ) {
-    this.eventoService.confirmados$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((eventos) => {
-        this.confirmados = new Set(eventos.map((evento) => String(evento.id)));
-        this.cdr.markForCheck();
-      });
-  }
+  ) {}
 
   ngOnInit(): void {
     this.loadEvents();
+    this.loadEventosComVinculo();
   }
 
   loadEvents(): void {
@@ -79,26 +77,46 @@ export class EventosComponent implements OnInit {
   }
 
   participate(evento: Evento): void {
-    this.eventoService.confirmarParticipacao(evento);
-    this.snackBar.open(
-      `Participacao confirmada em "${evento.nome}".`,
-      'Ver meus eventos',
-      { duration: 4500 }
-    ).onAction().subscribe(() => {
-      void this.router.navigate(['/meus-eventos']);
-    });
+    void this.router.navigate(['/eventos', evento.id]);
   }
 
   viewDetails(evento: Evento): void {
-    this.snackBar.open(
-      `${evento.nome}: ${evento.local}, em breve com detalhes completos.`,
-      'Fechar',
-      { duration: 4500 }
-    );
+    void this.router.navigate(['/eventos', evento.id]);
   }
 
-  isConfirmed(evento: Evento): boolean {
-    return this.confirmados.has(String(evento.id));
+  temVinculo(evento: Evento): boolean {
+    return this.eventosComVinculo.has(String(evento.id));
+  }
+
+  isConfirmed(_evento: Evento): boolean {
+    return false;
+  }
+
+  private loadEventosComVinculo(): void {
+    const usuarioAtual = this.authService.getUsuarioAtual();
+    const usuario$ = usuarioAtual
+      ? of(usuarioAtual)
+      : this.authService.me().pipe(catchError(() => of(null)));
+
+    usuario$
+      .pipe(
+        switchMap((usuario) => {
+          if (!usuario) {
+            return of([]);
+          }
+
+          return this.usuarioEventoService
+            .listarEventosDoUsuario(usuario.id)
+            .pipe(catchError(() => of([])));
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((relacoes) => {
+        this.eventosComVinculo = new Set(
+          relacoes.map((relacao) => String(relacao.eventoId))
+        );
+        this.cdr.markForCheck();
+      });
   }
 
   private getErrorMessage(error: unknown): string {

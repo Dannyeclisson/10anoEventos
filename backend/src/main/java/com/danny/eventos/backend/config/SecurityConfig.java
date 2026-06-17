@@ -33,7 +33,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/eventos", "/api/eventos/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/eventos", "/api/eventos/*", "/api/eventos/*/participacoes", "/api/eventos/*/insumos").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

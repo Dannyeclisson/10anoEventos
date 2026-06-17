@@ -29,7 +29,6 @@ public class UsuarioService {
                 .dataNascimento(usuario.getDataNascimento())
                 .cpf(usuario.getCpf())
                 .telefone(usuario.getTelefone())
-                .tipo(usuario.getTipo())
                 .build();
     }
 
@@ -49,7 +48,6 @@ public class UsuarioService {
                 .dataNascimento(request.getDataNascimento())
                 .cpf(request.getCpf())
                 .telefone(request.getTelefone())
-                .tipo(request.getTipo())
                 .build();
 
         Usuario salvo = repository.save(usuario);

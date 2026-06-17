@@ -30,7 +30,7 @@ export class DatePickerFieldComponent implements ControlValueAccessor {
   });
 
   @Input() label = 'Data';
-  @Input() hint = 'DD/MM/AAAA';
+  @Input() hint = '';
   @Input() requiredError = 'Data obrigatoria';
 
   readonly control = new FormControl<Date | null>(null);

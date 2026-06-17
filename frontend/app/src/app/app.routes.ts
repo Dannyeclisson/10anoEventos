@@ -32,6 +32,13 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'eventos/:id',
+        loadComponent: () =>
+          import('./pages/evento-detalhe/evento-detalhe').then(
+            (component) => component.EventoDetalheComponent
+          )
+      },
+      {
         path: 'meus-eventos',
         canActivate: [authGuard],
         loadComponent: () =>

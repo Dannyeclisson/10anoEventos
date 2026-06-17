@@ -38,6 +38,10 @@ export class EventoService {
     return this.http.get<EventoResponse[]>(this.apiUrl);
   }
 
+  buscarEventoPorId(id: number): Observable<EventoResponse> {
+    return this.http.get<EventoResponse>(`${this.apiUrl}/${id}`);
+  }
+
   listar(): Observable<EventosResultado> {
     return this.listarEventos().pipe(
       map((response) => ({
@@ -107,7 +111,7 @@ export class EventoService {
         evento.dataHora ||
         new Date(Date.now() + (index + 1) * 86400000).toISOString(),
       organizadorNome: evento.organizadorNome || 'Organizacao comunitaria',
-      participantes: 0,
+      participantes: evento.participantes ?? 0,
       imagem: this.fallbackImage(index),
       categoria: 'Comunidade',
       status: 'Disponivel'

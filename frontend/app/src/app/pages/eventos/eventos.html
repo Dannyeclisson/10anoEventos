@@ -27,6 +27,7 @@
             [evento]="evento"
             modo="disponivel"
             textoAcao="Participar"
+            [exibirAcao]="!temVinculo(evento)"
             [acaoDesabilitada]="isConfirmed(evento)"
             (visualizar)="viewDetails($event)"
             (acao)="participate($event)"

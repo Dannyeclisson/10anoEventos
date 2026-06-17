@@ -29,7 +29,7 @@
       @if (exibirParticipantes) {
         <div>
           <mat-icon>group</mat-icon>
-          <span>{{ evento.participantes }} participantes</span>
+          <span>{{ evento.participantes }}</span>
         </div>
       }
     </div>
@@ -46,15 +46,17 @@
     <button mat-button type="button" (click)="visualizar.emit(evento)">
       Visualizar
     </button>
-    <button
-      mat-flat-button
-      type="button"
-      [class.cancel-action]="modo === 'confirmado'"
-      [disabled]="acaoDesabilitada"
-      (click)="acao.emit(evento)"
-    >
-      <mat-icon>{{ modo === 'confirmado' ? 'event_busy' : 'add_task' }}</mat-icon>
-      {{ acaoDesabilitada ? 'Confirmado' : textoAcao }}
-    </button>
+    @if (exibirAcao) {
+      <button
+        mat-flat-button
+        type="button"
+        [class.cancel-action]="modo === 'confirmado'"
+        [disabled]="acaoDesabilitada"
+        (click)="acao.emit(evento)"
+      >
+        <mat-icon>{{ modo === 'confirmado' ? 'event_busy' : 'add_task' }}</mat-icon>
+        {{ acaoDesabilitada ? 'Confirmado' : textoAcao }}
+      </button>
+    }
   </mat-card-actions>
 </mat-card>

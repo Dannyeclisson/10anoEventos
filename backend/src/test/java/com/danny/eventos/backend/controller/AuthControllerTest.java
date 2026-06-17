@@ -37,6 +37,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(cookie().exists("AUTH_TOKEN"))
                 .andExpect(jsonPath("$.email").value("auth.teste@example.com"))
+                .andExpect(jsonPath("$.tipo").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist())
                 .andExpect(jsonPath("$.senhaHash").doesNotExist())
                 .andReturn();
@@ -46,6 +47,7 @@ class AuthControllerTest {
         mockMvc.perform(get("/api/auth/me").cookie(authCookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("auth.teste@example.com"))
+                .andExpect(jsonPath("$.tipo").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist())
                 .andExpect(jsonPath("$.senhaHash").doesNotExist());
 
@@ -80,8 +82,7 @@ class AuthControllerTest {
                                   "senha": "SenhaTeste123",
                                   "dataNascimento": "2001-11-24",
                                   "cpf": "074.885.581-54",
-                                  "telefone": "(61) 98326-5978",
-                                  "tipo": "ORGANIZADOR"
+                                  "telefone": "(61) 98326-5978"
                                 }
                                 """))
                 .andExpect(status().isCreated());

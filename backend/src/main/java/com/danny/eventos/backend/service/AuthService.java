@@ -56,7 +56,6 @@ public class AuthService {
                 .dataNascimento(usuario.getDataNascimento())
                 .cpf(usuario.getCpf())
                 .telefone(usuario.getTelefone())
-                .tipo(usuario.getTipo())
                 .build();
     }
 

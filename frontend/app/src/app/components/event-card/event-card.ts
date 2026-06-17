@@ -32,6 +32,7 @@ export class EventCardComponent {
   @Input() textoAcao = 'Participar';
   @Input() exibirStatus = false;
   @Input() exibirParticipantes = true;
+  @Input() exibirAcao = true;
   @Input() acaoDesabilitada = false;
 
   @Output() visualizar = new EventEmitter<Evento>();

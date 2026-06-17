@@ -28,6 +28,10 @@
   gap: 18px;
 }
 
+mat-divider {
+  margin: 28px 0;
+}
+
 .full-span {
   grid-column: 1 / -1;
 }
@@ -54,6 +58,41 @@
   margin-top: 8px;
 }
 
+.supplies-section {
+  display: grid;
+  gap: 18px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.insumo-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.insumo-actions {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+}
+
+.chip-field {
+  width: 100%;
+}
+
+.chip-title {
+  font-weight: 700;
+}
+
+.chip-meta {
+  margin-left: 8px;
+  color: var(--app-text-muted);
+}
+
 .form-actions button {
   min-width: 180px;
 }
@@ -69,6 +108,10 @@
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insumo-form-grid {
     grid-template-columns: 1fr;
   }
 

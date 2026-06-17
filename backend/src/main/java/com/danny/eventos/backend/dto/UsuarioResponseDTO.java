@@ -1,6 +1,5 @@
 package com.danny.eventos.backend.dto;
 
-import com.danny.eventos.backend.model.TipoUsuario;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,5 +15,4 @@ public class UsuarioResponseDTO {
     private LocalDate dataNascimento;
     private String cpf;
     private String telefone;
-    private TipoUsuario tipo;
 }

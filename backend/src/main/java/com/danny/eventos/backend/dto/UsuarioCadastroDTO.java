@@ -1,6 +1,5 @@
 package com.danny.eventos.backend.dto;
 
-import com.danny.eventos.backend.model.TipoUsuario;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,7 +31,4 @@ public class UsuarioCadastroDTO {
 
     @NotBlank(message = "Telefone e obrigatorio")
     private String telefone;
-
-    @NotNull(message = "Tipo de usuario e obrigatorio")
-    private TipoUsuario tipo;
 }

@@ -1,7 +1,9 @@
 package com.danny.eventos.backend.controller;
 
 import com.danny.eventos.backend.dto.UsuarioCadastroDTO;
+import com.danny.eventos.backend.dto.UsuarioEventoResponseDTO;
 import com.danny.eventos.backend.dto.UsuarioResponseDTO;
+import com.danny.eventos.backend.service.UsuarioEventoService;
 import com.danny.eventos.backend.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,9 +17,11 @@ import java.util.List;
 public class UsuarioController {
 
     private final UsuarioService service;
+    private final UsuarioEventoService usuarioEventoService;
 
-    public UsuarioController(UsuarioService service) {
+    public UsuarioController(UsuarioService service, UsuarioEventoService usuarioEventoService) {
         this.service = service;
+        this.usuarioEventoService = usuarioEventoService;
     }
 
     @PostMapping
@@ -37,5 +41,10 @@ public class UsuarioController {
     @GetMapping("/{id}")
     public UsuarioResponseDTO buscarPorId(@PathVariable Long id) {
         return service.buscarPorId(id);
+    }
+
+    @GetMapping("/{usuarioId}/eventos")
+    public List<UsuarioEventoResponseDTO> listarEventosDoUsuario(@PathVariable Long usuarioId) {
+        return usuarioEventoService.listarRelacoesPorUsuario(usuarioId);
     }
 }

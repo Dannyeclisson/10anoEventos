@@ -12,6 +12,62 @@
   text-transform: uppercase;
 }
 
+.my-events-list {
+  display: grid;
+  gap: 18px;
+}
+
+.my-event-card {
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(42, 55, 91, 0.07);
+}
+
+.my-event-card p {
+  margin: 16px 0;
+  color: var(--app-text-muted);
+  line-height: 1.6;
+}
+
+.event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 16px;
+  color: var(--app-text-muted);
+}
+
+.event-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.event-meta mat-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--app-primary);
+  font-size: 18px;
+}
+
+mat-card-actions {
+  gap: 8px;
+  padding: 16px;
+}
+
+.cancel-action {
+  --mdc-filled-button-container-color: #fff0f0;
+  --mdc-filled-button-label-text-color: #a32f2f;
+}
+
+.api-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 160px;
+  color: var(--app-text-muted);
+}
+
 @media (max-width: 600px) {
   .my-events-page {
     padding: 42px 0 64px;

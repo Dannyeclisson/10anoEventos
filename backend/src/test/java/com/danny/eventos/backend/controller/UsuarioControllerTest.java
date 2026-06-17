@@ -36,8 +36,7 @@ class UsuarioControllerTest {
                   "senha": "SenhaTeste123",
                   "dataNascimento": "1992-05-14",
                   "cpf": "123.456.789-00",
-                  "telefone": "(11) 98765-4321",
-                  "tipo": "PARTICIPANTE"
+                  "telefone": "(11) 98765-4321"
                 }
                 """;
 
@@ -51,7 +50,7 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.dataNascimento").value("1992-05-14"))
                 .andExpect(jsonPath("$.cpf").value("123.456.789-00"))
                 .andExpect(jsonPath("$.telefone").value("(11) 98765-4321"))
-                .andExpect(jsonPath("$.tipo").value("PARTICIPANTE"))
+                .andExpect(jsonPath("$.tipo").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist())
                 .andExpect(jsonPath("$.senhaHash").doesNotExist())
                 .andReturn();
@@ -68,6 +67,7 @@ class UsuarioControllerTest {
         mockMvc.perform(get("/api/usuarios/" + usuarioId).cookie(authCookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("marina.carvalho@example.com"))
+                .andExpect(jsonPath("$.tipo").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist())
                 .andExpect(jsonPath("$.senhaHash").doesNotExist());
     }

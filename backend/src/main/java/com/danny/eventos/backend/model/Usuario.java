@@ -35,6 +35,5 @@ public class Usuario {
     private String telefone;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TipoUsuario tipo; // ORGANIZADOR, PARTICIPANTE, COLABORADOR
+    private TipoUsuario tipo;
 }
