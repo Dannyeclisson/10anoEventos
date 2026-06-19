@@ -107,12 +107,16 @@ export class MeusEventosComponent implements OnInit {
   }
 
   cancelParticipation(item: MeuEventoView): void {
-    if (!this.usuarioId || item.relacao.tipoRelacao === 1) {
+    if (!this.usuarioId || !this.podeDesistir(item)) {
+      return;
+    }
+
+    if (!confirm('Deseja cancelar sua inscricao neste evento?')) {
       return;
     }
 
     this.usuarioEventoService
-      .removerParticipacao(item.relacao.eventoId, this.usuarioId)
+      .cancelarInscricao(item.relacao.eventoId, this.usuarioId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -139,16 +143,38 @@ export class MeusEventosComponent implements OnInit {
 
   getTipoLabel(tipo: TipoRelacaoEvento): string {
     const labels: Record<TipoRelacaoEvento, string> = {
-      1: 'Organizador',
-      2: 'Colaborador',
-      3: 'Participante'
+      [TipoRelacaoEvento.CANCELADO]: 'Cancelado',
+      [TipoRelacaoEvento.PARTICIPANTE]: 'Participante',
+      [TipoRelacaoEvento.COLABORADOR]: 'Colaborador',
+      [TipoRelacaoEvento.ORGANIZADOR]: 'Organizador'
     };
 
     return labels[tipo];
   }
 
   podeDesistir(item: MeuEventoView): boolean {
-    return item.relacao.tipoRelacao !== 1;
+    return item.relacao.tipoRelacao === TipoRelacaoEvento.PARTICIPANTE ||
+      item.relacao.tipoRelacao === TipoRelacaoEvento.COLABORADOR;
+  }
+
+  getStatusEventoLabel(evento: EventoResponse | null): string {
+    if (!evento) {
+      return 'Indisponivel';
+    }
+
+    const labels = {
+      agendado: 'Agendado',
+      em_andamento: 'Em andamento',
+      finalizado: 'Finalizado',
+      cancelado: 'Cancelado',
+      adiado: 'Adiado'
+    };
+
+    return labels[evento.statusEvento];
+  }
+
+  getQuantidadeInscritos(evento: EventoResponse | null): number {
+    return evento?.quantidadeInscritos ?? evento?.participantes ?? 0;
   }
 
   private getErrorMessage(error: unknown): string {

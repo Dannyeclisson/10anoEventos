@@ -1,5 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormArray,
@@ -11,17 +19,18 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
-import { DatePickerFieldComponent } from '../../components/date-picker-field/date-picker-field';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TimePickerFieldComponent } from '../../components/time-picker-field/time-picker-field';
-import { EventoCadastroRequest } from '../../models/evento.model';
+import { EventoCadastroRequest, EventoResponse } from '../../models/evento.model';
 import {
   InsumoEventoRequest,
   StatusInsumo
@@ -77,14 +86,15 @@ const STATUS_INSUMO: StatusInsumo[] = [
   selector: 'app-cadastro-evento',
   standalone: true,
   imports: [
-    DatePickerFieldComponent,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
+    MatDatepickerModule,
     MatDividerModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatNativeDateModule,
     MatProgressSpinnerModule,
     MatSelectModule,
     MatSnackBarModule,
@@ -98,23 +108,37 @@ const STATUS_INSUMO: StatusInsumo[] = [
 export class CadastroEventoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly eventoService = inject(EventoService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
 
   loading = false;
+  loadingEvento = false;
+  loadErrorMessage = '';
   usuarioNome = '';
-  private organizadorId: number | null = null;
+  editMode = false;
+  eventoId: number | null = null;
   readonly categoriasInsumo = CATEGORIAS_INSUMO;
   readonly unidadesMedida = UNIDADES_MEDIDA;
   readonly statusInsumo = STATUS_INSUMO;
 
-  readonly form = this.fb.nonNullable.group({
+  readonly form = this.fb.group({
     nome: ['', Validators.required],
     descricao: ['', Validators.required],
     local: ['', Validators.required],
-    dataEvento: ['', Validators.required],
-    horarioEvento: ['', Validators.required],
+    dataInicio: [null as Date | null, Validators.required],
+    dataFim: [null as Date | null, Validators.required],
+    horaInicio: ['', Validators.required],
+    horaFim: ['', Validators.required],
+    dataInicioInscricoes: ['', Validators.required],
+    capacidadeParticipantes: [2, [
+      Validators.required,
+      Validators.min(2),
+      Validators.pattern(/^\d+$/)
+    ]],
     insumos: this.fb.array<InsumoEventoForm>([])
   });
 
@@ -132,17 +156,22 @@ export class CadastroEventoComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.editMode = Number.isFinite(id) && id > 0;
+    this.eventoId = this.editMode ? id : null;
+
     const usuarioAtual = this.authService.getUsuarioAtual();
     if (usuarioAtual) {
       this.usuarioNome = usuarioAtual.nome;
-      this.organizadorId = usuarioAtual.id;
+      this.loadEventoParaEdicao();
       return;
     }
 
-    this.authService.me().subscribe({
+    this.authService.me().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (usuario) => {
         this.usuarioNome = usuario.nome;
-        this.organizadorId = usuario.id;
+        this.loadEventoParaEdicao();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.snackBar.open('Faca login para cadastrar eventos.', 'Fechar', {
@@ -161,29 +190,58 @@ export class CadastroEventoComponent implements OnInit {
       return;
     }
 
-    if (!this.organizadorId) {
-      this.snackBar.open('Nao foi possivel identificar o usuario logado.', 'Fechar', {
+    this.loading = true;
+    const raw = this.form.getRawValue();
+    const insumos = this.getInsumosPayload();
+    const dataInicio = this.buildDateTime(raw.dataInicio, raw.horaInicio);
+    const dataFim = this.buildDateTime(raw.dataFim, raw.horaFim);
+    const dataInicioInscricoes = this.normalizeDateTimeLocal(
+      raw.dataInicioInscricoes
+    );
+
+    if (!dataInicio || !dataFim || !dataInicioInscricoes) {
+      this.loading = false;
+      this.snackBar.open('Informe as datas e horarios obrigatorios.', 'Fechar', {
         duration: 4000
       });
       return;
     }
 
-    this.loading = true;
-    const raw = this.form.getRawValue();
-    const insumos = this.getInsumosPayload();
+    const validationMessage = this.validateBusinessDates(
+      dataInicio,
+      dataFim,
+      dataInicioInscricoes,
+      Number(raw.capacidadeParticipantes)
+    );
+
+    if (validationMessage) {
+      this.loading = false;
+      this.snackBar.open(validationMessage, 'Fechar', {
+        duration: 4500
+      });
+      return;
+    }
+
     const payload: EventoCadastroRequest = {
-      nome: raw.nome,
-      descricao: raw.descricao,
-      local: raw.local,
-      dataHora: this.buildDateTime(raw.dataEvento, raw.horarioEvento),
-      organizadorId: this.organizadorId,
+      nome: raw.nome || '',
+      descricao: raw.descricao || '',
+      local: raw.local || '',
+      dataInicio,
+      dataFim,
+      dataInicioInscricoes,
+      capacidadeParticipantes: Number(raw.capacidadeParticipantes),
       ...(insumos.length ? { insumos } : {})
     };
 
-    this.eventoService.cadastrarEvento(payload).subscribe({
+    const request$ = this.editMode && this.eventoId
+      ? this.eventoService.editarEvento(this.eventoId, payload)
+      : this.eventoService.cadastrarEvento(payload);
+
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.loading = false;
-        this.snackBar.open('Evento cadastrado com sucesso.', 'Ver eventos', {
+        this.cdr.markForCheck();
+        this.snackBar.open(this.editMode ? 'Evento atualizado com sucesso.' : 'Evento cadastrado com sucesso.', 'Ver eventos', {
           duration: 4500
         }).onAction().subscribe(() => {
           void this.router.navigate(['/eventos']);
@@ -192,9 +250,10 @@ export class CadastroEventoComponent implements OnInit {
       },
       error: (error: unknown) => {
         this.loading = false;
-        this.snackBar.open(this.getErrorMessage(error), 'Fechar', {
+        this.snackBar.open(this.getSubmitErrorMessage(error), 'Fechar', {
           duration: 5500
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -242,8 +301,130 @@ export class CadastroEventoComponent implements OnInit {
     return insumo.getRawValue();
   }
 
-  private buildDateTime(date: string, time: string): string {
-    return `${date}T${time}:00`;
+  private loadEventoParaEdicao(): void {
+    if (!this.editMode || !this.eventoId) {
+      return;
+    }
+
+    this.loadingEvento = true;
+    this.loadErrorMessage = '';
+    this.eventoService.buscarEventoParaEdicao(this.eventoId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+      next: (evento) => {
+        this.loadingEvento = false;
+        this.patchEvento(evento);
+        this.cdr.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.loadingEvento = false;
+        this.loadErrorMessage = this.getLoadEditErrorMessage(error);
+        this.snackBar.open(this.loadErrorMessage, 'Fechar', {
+          duration: 5000
+        });
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  retryLoadEvento(): void {
+    this.loadEventoParaEdicao();
+  }
+
+  voltarAosEventos(): void {
+    void this.router.navigate(['/eventos']);
+  }
+
+  private patchEvento(evento: EventoResponse): void {
+    this.form.patchValue({
+      nome: evento.nome,
+      descricao: evento.descricao,
+      local: evento.local,
+      dataInicio: this.parseLocalDate(evento.dataInicio),
+      dataFim: this.parseLocalDate(evento.dataFim),
+      horaInicio: this.extractTime(evento.dataInicio),
+      horaFim: this.extractTime(evento.dataFim),
+      dataInicioInscricoes: this.toDateTimeLocalInput(evento.dataInicioInscricoes),
+      capacidadeParticipantes: evento.capacidadeParticipantes
+    });
+
+    this.insumos.clear();
+    for (const insumo of evento.insumos || []) {
+      this.insumos.push(this.createInsumoGroup(insumo));
+    }
+  }
+
+  private buildDateTime(date: Date | null | undefined, time: string | null | undefined): string {
+    if (!date || !time) {
+      return '';
+    }
+
+    return `${this.formatDateOnly(date)}T${time}:00`;
+  }
+
+  private normalizeDateTimeLocal(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    return value.length === 16 ? `${value}:00` : value;
+  }
+
+  private validateBusinessDates(
+    dataInicio: string,
+    dataFim: string,
+    dataInicioInscricoes: string,
+    capacidade: number
+  ): string {
+    const inicio = new Date(dataInicio);
+    const fim = new Date(dataFim);
+    const inscricoes = new Date(dataInicioInscricoes);
+    const agora = new Date();
+
+    if (inicio <= agora) {
+      return 'Data de inicio do evento deve ser futura.';
+    }
+
+    if (fim <= inicio) {
+      return 'Data de fim deve ser posterior ao inicio.';
+    }
+
+    if (!this.editMode && inscricoes < new Date(agora.getTime() - 5000)) {
+      return 'Abertura das inscricoes deve ser agora ou no futuro.';
+    }
+
+    if (inscricoes >= inicio) {
+      return 'Abertura das inscricoes deve ser anterior ao inicio do evento.';
+    }
+
+    if (!Number.isInteger(capacidade) || capacidade <= 1) {
+      return 'Capacidade maxima deve ser um numero inteiro maior que 1.';
+    }
+
+    return '';
+  }
+
+  private formatDateOnly(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private parseLocalDate(value: string): Date {
+    const [datePart] = value.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
+  }
+
+  private extractTime(value: string): string {
+    return value.split('T')[1]?.slice(0, 5) || '00:00';
+  }
+
+  private toDateTimeLocalInput(value: string): string {
+    return value.slice(0, 16);
   }
 
   private createInsumoGroup(insumo: InsumoEventoRequest): InsumoEventoForm {
@@ -261,20 +442,43 @@ export class CadastroEventoComponent implements OnInit {
     return this.insumos.controls.map((control) => control.getRawValue());
   }
 
-  private getErrorMessage(error: unknown): string {
+  private getLoadEditErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 0) {
-        return 'Nao foi possivel conectar ao backend.';
+        return 'Não foi possível carregar a edição do evento.';
       }
 
-      const message = String(error.error?.message || '').toLowerCase();
-      if (message.includes('usuario')) {
-        return 'Organizador nao encontrado. Cadastre ou informe um usuario existente.';
+      if (error.status === 403) {
+        return 'Você não tem permissão para editar este evento.';
       }
 
-      return error.error?.message || 'Nao foi possivel cadastrar o evento.';
+      if (error.status === 404) {
+        return 'Evento não encontrado.';
+      }
+
+      return 'Não foi possível carregar a edição do evento.';
     }
 
-    return 'Nao foi possivel cadastrar o evento.';
+    return 'Não foi possível carregar a edição do evento.';
+  }
+
+  private getSubmitErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 403) {
+        return 'Você não tem permissão para editar este evento.';
+      }
+
+      if (error.status === 404) {
+        return 'Evento não encontrado.';
+      }
+
+      if (error.status === 400 && error.error?.message) {
+        return error.error.message;
+      }
+    }
+
+    return this.editMode
+      ? 'Não foi possível atualizar o evento.'
+      : 'Não foi possível cadastrar o evento.';
   }
 }

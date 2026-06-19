@@ -23,7 +23,7 @@ import org.hibernate.annotations.Check;
                 @UniqueConstraint(columnNames = {"evento_id", "usuario_id"})
         }
 )
-@Check(constraints = "tipo_relacao in (1, 2, 3)")
+@Check(constraints = "tipo_relacao in (0, 1, 2, 3)")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -44,5 +44,5 @@ public class UsuarioEvento {
     private Usuario usuario;
 
     @Column(name = "tipo_relacao", nullable = false)
-    private Integer tipoRelacao;
+    private TipoRelacaoEvento tipoRelacao;
 }

@@ -39,6 +39,10 @@
         <mat-icon matChipAvatar>check_circle</mat-icon>
         Presença confirmada
       </mat-chip>
+    } @else if (evento.statusInscricao) {
+      <mat-chip class="status-chip">
+        {{ evento.statusInscricao === 'aberta' ? 'Inscricoes abertas' : 'Inscricoes indisponiveis' }}
+      </mat-chip>
     }
   </mat-card-content>
 

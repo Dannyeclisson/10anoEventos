@@ -34,12 +34,40 @@ export class EventoService {
     });
   }
 
+  editarEvento(
+    id: number,
+    payload: EventoCadastroRequest
+  ): Observable<EventoResponse> {
+    return this.http.put<EventoResponse>(`${this.apiUrl}/${id}`, payload, {
+      withCredentials: true
+    });
+  }
+
+  cancelarEvento(
+    id: number,
+    motivo?: string
+  ): Observable<EventoResponse> {
+    return this.http.patch<EventoResponse>(
+      `${this.apiUrl}/${id}/cancelar`,
+      { motivo },
+      { withCredentials: true }
+    );
+  }
+
   listarEventos(): Observable<EventoResponse[]> {
     return this.http.get<EventoResponse[]>(this.apiUrl);
   }
 
   buscarEventoPorId(id: number): Observable<EventoResponse> {
-    return this.http.get<EventoResponse>(`${this.apiUrl}/${id}`);
+    return this.http.get<EventoResponse>(`${this.apiUrl}/${id}`, {
+      withCredentials: true
+    });
+  }
+
+  buscarEventoParaEdicao(id: number): Observable<EventoResponse> {
+    return this.http.get<EventoResponse>(`${this.apiUrl}/${id}/editar`, {
+      withCredentials: true
+    });
   }
 
   listar(): Observable<EventosResultado> {
@@ -108,13 +136,20 @@ export class EventoService {
         'Conecte-se com pessoas, parceiros e iniciativas da comunidade.',
       local: evento.local || 'Local a confirmar',
       data:
+        evento.dataInicio ||
         evento.dataHora ||
         new Date(Date.now() + (index + 1) * 86400000).toISOString(),
-      organizadorNome: evento.organizadorNome || 'Organizacao comunitaria',
-      participantes: evento.participantes ?? 0,
-      imagem: this.fallbackImage(index),
+      organizadorNome:
+        evento.organizadorNome ||
+        evento.nomeOrganizador ||
+        'Organizacao comunitaria',
+      participantes: evento.quantidadeInscritos ?? evento.participantes ?? 0,
+      imagem: evento.imagemUrl || this.fallbackImage(index),
       categoria: 'Comunidade',
-      status: 'Disponivel'
+      status: 'Disponivel',
+      statusEvento: evento.statusEvento,
+      statusInscricao: evento.statusInscricao,
+      capacidadeParticipantes: evento.capacidadeParticipantes
     };
   }
 

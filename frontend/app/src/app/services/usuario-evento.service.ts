@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   ParticiparEventoRequest,
+  TipoRelacaoEvento,
   UsuarioEventoResponse
 } from '../models/usuario-evento.model';
 
@@ -15,8 +16,17 @@ export class UsuarioEventoService {
 
   participarEvento(
     eventoId: number,
-    payload: ParticiparEventoRequest
+    tipoRelacao: TipoRelacaoEvento.PARTICIPANTE | TipoRelacaoEvento.COLABORADOR,
+    usuarioId: number,
+    insumoIds?: number[]
   ): Observable<UsuarioEventoResponse> {
+    const payload: ParticiparEventoRequest = {
+      // Temporario enquanto o backend ainda exige usuarioId no payload.
+      usuarioId,
+      tipoRelacao,
+      ...(insumoIds?.length ? { insumoIds } : {})
+    };
+
     return this.http.post<UsuarioEventoResponse>(
       `${this.eventosApiUrl}/${eventoId}/participacoes`,
       payload,
@@ -40,9 +50,16 @@ export class UsuarioEventoService {
     );
   }
 
-  removerParticipacao(eventoId: number, usuarioId: number): Observable<void> {
-    return this.http.delete<void>(
-      `${this.eventosApiUrl}/${eventoId}/participacoes/${usuarioId}`,
+  cancelarInscricao(
+    eventoId: number,
+    usuarioId: number
+  ): Observable<UsuarioEventoResponse> {
+    return this.http.patch<UsuarioEventoResponse>(
+      `${this.eventosApiUrl}/${eventoId}/inscricao/cancelar`,
+      {
+        // Temporario enquanto o backend ainda exige usuarioId no payload.
+        usuarioId
+      },
       { withCredentials: true }
     );
   }

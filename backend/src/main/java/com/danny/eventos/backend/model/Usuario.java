@@ -29,11 +29,9 @@ public class Usuario {
 
     private LocalDate dataNascimento;
 
-    @Column(unique = true, length = 14)
+    @Column(nullable = false, unique = true, length = 11)
     private String cpf;
 
+    @Column(nullable = false, unique = true, length = 20)
     private String telefone;
-
-    @Enumerated(EnumType.STRING)
-    private TipoUsuario tipo;
 }

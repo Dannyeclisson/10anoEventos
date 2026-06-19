@@ -75,9 +75,14 @@ export class EventoDetalheComponent implements OnInit {
   submitting = false;
   errorMessage = '';
   usuarioId: number | null = null;
+  readonly TipoRelacaoEvento = TipoRelacaoEvento;
 
   readonly form = this.fb.group({
-    tipoRelacao: this.fb.control<2 | 3 | null>(null, Validators.required)
+    tipoRelacao: this.fb.control<
+      | TipoRelacaoEvento.PARTICIPANTE
+      | TipoRelacaoEvento.COLABORADOR
+      | null
+    >(null, Validators.required)
   });
   private readonly insumosSelecionados = new Set<number>();
 
@@ -85,7 +90,7 @@ export class EventoDetalheComponent implements OnInit {
     this.form.controls.tipoRelacao.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((tipoRelacao) => {
-        if (tipoRelacao !== 2) {
+        if (tipoRelacao !== TipoRelacaoEvento.COLABORADOR) {
           this.insumosSelecionados.clear();
           this.cdr.markForCheck();
         }
@@ -114,8 +119,18 @@ export class EventoDetalheComponent implements OnInit {
       return;
     }
 
+    if (!this.podeInscrever()) {
+      this.snackBar.open(this.getInscricaoBloqueadaMessage(), 'Fechar', {
+        duration: 4000
+      });
+      return;
+    }
+
     const tipoRelacao = this.form.controls.tipoRelacao.value;
-    if (tipoRelacao !== 2 && tipoRelacao !== 3) {
+    if (
+      tipoRelacao !== TipoRelacaoEvento.PARTICIPANTE &&
+      tipoRelacao !== TipoRelacaoEvento.COLABORADOR
+    ) {
       this.snackBar.open('Tipo de participacao invalido.', 'Fechar', {
         duration: 3500
       });
@@ -123,7 +138,7 @@ export class EventoDetalheComponent implements OnInit {
     }
 
     const insumoIds = Array.from(this.insumosSelecionados);
-    if (tipoRelacao === 2 && !insumoIds.length) {
+    if (tipoRelacao === TipoRelacaoEvento.COLABORADOR && !insumoIds.length) {
       this.snackBar.open('Selecione ao menos um insumo para colaborar.', 'Fechar', {
         duration: 4000
       });
@@ -132,27 +147,100 @@ export class EventoDetalheComponent implements OnInit {
 
     this.submitting = true;
     this.usuarioEventoService
-      .participarEvento(this.evento.id, {
-        usuarioId: this.usuarioId,
+      .participarEvento(
+        this.evento.id,
         tipoRelacao,
-        ...(tipoRelacao === 2 ? { insumoIds } : {})
-      })
+        this.usuarioId,
+        tipoRelacao === TipoRelacaoEvento.COLABORADOR ? insumoIds : undefined
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.submitting = false;
           this.form.reset({ tipoRelacao: null });
           this.insumosSelecionados.clear();
-          this.snackBar.open('Participacao confirmada com sucesso.', 'Fechar', {
+          this.snackBar.open('Participação confirmada com sucesso.', 'Fechar', {
             duration: 4000
           });
           this.loadEvento();
           this.loadParticipacoes(this.evento?.id);
           this.cdr.markForCheck();
         },
-        error: (error: unknown) => {
+        error: () => {
           this.submitting = false;
-          this.snackBar.open(this.getParticipationError(error), 'Fechar', {
+          this.snackBar.open('Não foi possível confirmar a participação.', 'Fechar', {
+            duration: 5000
+          });
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  cancelarInscricao(): void {
+    if (!this.evento || !this.usuarioId || !this.relacaoAtiva()) {
+      return;
+    }
+
+    if (!confirm('Deseja cancelar sua inscricao neste evento?')) {
+      return;
+    }
+
+    this.submitting = true;
+    this.usuarioEventoService
+      .cancelarInscricao(this.evento.id, this.usuarioId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.submitting = false;
+          this.snackBar.open('Inscrição cancelada com sucesso.', 'Fechar', {
+            duration: 4000
+          });
+          this.loadEvento();
+          this.loadParticipacoes(this.evento?.id);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.submitting = false;
+          this.snackBar.open('Não foi possível cancelar a inscrição.', 'Fechar', {
+            duration: 5000
+          });
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  editarEvento(): void {
+    if (this.evento) {
+      void this.router.navigate(['/eventos', this.evento.id, 'editar']);
+    }
+  }
+
+  cancelarEvento(): void {
+    if (!this.evento || !this.usuarioId || !this.ehOrganizador()) {
+      return;
+    }
+
+    const motivo = prompt('Motivo do cancelamento (opcional):') || undefined;
+    if (!confirm('Confirma o cancelamento deste evento?')) {
+      return;
+    }
+
+    this.submitting = true;
+    this.eventoService
+      .cancelarEvento(this.evento.id, motivo)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.submitting = false;
+          this.snackBar.open('Evento cancelado com sucesso.', 'Fechar', {
+            duration: 4000
+          });
+          this.loadEvento();
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.submitting = false;
+          this.snackBar.open('Não foi possível cancelar o evento.', 'Fechar', {
             duration: 5000
           });
           this.cdr.markForCheck();
@@ -161,23 +249,127 @@ export class EventoDetalheComponent implements OnInit {
   }
 
   usuarioJaVinculado(): boolean {
-    return this.usuarioId !== null && this.participacoes.some(
-      (relacao) => relacao.usuarioId === this.usuarioId
+    return !!this.relacaoAtiva();
+  }
+
+  relacaoAtiva(): UsuarioEventoResponse | null {
+    if (this.usuarioId === null) {
+      return null;
+    }
+
+    return this.participacoes.find(
+      (relacao) =>
+        relacao.usuarioId === this.usuarioId &&
+        relacao.tipoRelacao !== TipoRelacaoEvento.CANCELADO
+    ) || null;
+  }
+
+  ehOrganizador(): boolean {
+    return this.usuarioId !== null && (
+      this.evento?.organizadorId === this.usuarioId ||
+      this.participacoes.some(
+        (relacao) =>
+          relacao.usuarioId === this.usuarioId &&
+          relacao.tipoRelacao === TipoRelacaoEvento.ORGANIZADOR
+      )
     );
   }
 
   getTipoLabel(tipo: TipoRelacaoEvento): string {
     const labels: Record<TipoRelacaoEvento, string> = {
-      1: 'Organizador',
-      2: 'Colaborador',
-      3: 'Participante'
+      [TipoRelacaoEvento.CANCELADO]: 'Cancelado',
+      [TipoRelacaoEvento.PARTICIPANTE]: 'Participante',
+      [TipoRelacaoEvento.COLABORADOR]: 'Colaborador',
+      [TipoRelacaoEvento.ORGANIZADOR]: 'Organizador'
     };
 
     return labels[tipo];
   }
 
+  getStatusEventoLabel(): string {
+    const labels = {
+      agendado: 'Agendado',
+      em_andamento: 'Em andamento',
+      finalizado: 'Finalizado',
+      cancelado: 'Cancelado',
+      adiado: 'Adiado'
+    };
+
+    return this.evento ? labels[this.evento.statusEvento] : '';
+  }
+
+  getStatusInscricaoLabel(): string {
+    const labels = {
+      nao_aberta: 'Nao aberta',
+      aberta: 'Aberta',
+      encerrada: 'Encerrada',
+      lotada: 'Lotada'
+    };
+
+    return this.evento ? labels[this.evento.statusInscricao] : '';
+  }
+
+  getQuantidadeInscritos(): number {
+    return this.evento?.quantidadeInscritos ?? this.evento?.participantes ?? 0;
+  }
+
+  podeInscrever(): boolean {
+    return !!this.evento &&
+      !this.ehOrganizador() &&
+      !this.usuarioJaVinculado() &&
+      this.evento.statusInscricao === 'aberta';
+  }
+
+  podeCancelarInscricao(): boolean {
+    const relacao = this.relacaoAtiva();
+    return !!relacao &&
+      relacao.tipoRelacao !== TipoRelacaoEvento.ORGANIZADOR &&
+      relacao.tipoRelacao !== TipoRelacaoEvento.CANCELADO;
+  }
+
+  podeEditarEvento(): boolean {
+    return this.ehOrganizador() &&
+      this.evento?.statusEvento !== 'cancelado' &&
+      this.evento?.statusEvento !== 'finalizado';
+  }
+
+  podeCancelarEvento(): boolean {
+    return this.ehOrganizador() &&
+      this.evento?.statusEvento !== 'cancelado' &&
+      this.evento?.statusEvento !== 'finalizado';
+  }
+
+  getInscricaoBloqueadaMessage(): string {
+    if (!this.evento) {
+      return 'Evento indisponivel.';
+    }
+
+    if (this.evento.statusInscricao === 'nao_aberta') {
+      return 'Inscricoes ainda nao abertas.';
+    }
+
+    if (this.evento.statusInscricao === 'lotada') {
+      return 'Evento lotado.';
+    }
+
+    if (this.evento.statusEvento === 'cancelado') {
+      return 'Evento cancelado.';
+    }
+
+    if (this.evento.statusEvento === 'finalizado') {
+      return 'Evento finalizado.';
+    }
+
+    if (this.evento.statusEvento === 'em_andamento') {
+      return 'Evento em andamento.';
+    }
+
+    return 'Inscricoes encerradas.';
+  }
+
   colaboradorSelecionado(): boolean {
-    return this.form.controls.tipoRelacao.value === 2 && !this.usuarioJaVinculado();
+    return this.form.controls.tipoRelacao.value === TipoRelacaoEvento.COLABORADOR &&
+      !this.usuarioJaVinculado();
   }
 
   insumoSelecionado(insumoId: number): boolean {
@@ -296,16 +488,4 @@ export class EventoDetalheComponent implements OnInit {
     return 'Nao foi possivel carregar o evento.';
   }
 
-  private getParticipationError(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      const message = String(error.error?.message || '').toLowerCase();
-      if (message.includes('ja possui vinculo')) {
-        return 'Voce ja possui vinculo com este evento.';
-      }
-
-      return error.error?.message || 'Nao foi possivel confirmar a participacao.';
-    }
-
-    return 'Nao foi possivel confirmar a participacao.';
-  }
 }

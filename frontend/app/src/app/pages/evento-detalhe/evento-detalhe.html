@@ -19,6 +19,14 @@
         <span class="eyebrow">Detalhes do evento</span>
         <h1>{{ evento.nome }}</h1>
         <p>{{ evento.descricao }}</p>
+        <div class="status-row">
+          <mat-chip [class]="'status-chip status-' + evento.statusEvento">
+            {{ getStatusEventoLabel() }}
+          </mat-chip>
+          <mat-chip [class]="'status-chip inscricao-' + evento.statusInscricao">
+            Inscricoes: {{ getStatusInscricaoLabel() }}
+          </mat-chip>
+        </div>
       </header>
 
       <div class="detail-layout">
@@ -31,25 +39,80 @@
               </div>
               <div>
                 <mat-icon>calendar_today</mat-icon>
-                <span>{{ evento.dataHora | date: 'dd MMM yyyy, HH:mm' }}</span>
+                <span>{{ evento.dataInicio | date: 'dd MMM yyyy, HH:mm' }}</span>
+              </div>
+              <div>
+                <mat-icon>event_available</mat-icon>
+                <span>{{ evento.dataFim | date: 'dd MMM yyyy, HH:mm' }}</span>
+              </div>
+              <div>
+                <mat-icon>how_to_reg</mat-icon>
+                <span>Inscricoes: {{ evento.dataInicioInscricoes | date: 'dd MMM yyyy, HH:mm' }}</span>
               </div>
               <div>
                 <mat-icon>verified_user</mat-icon>
-                <span>{{ evento.organizadorNome || 'Organizador nao informado' }}</span>
+                <span>{{ evento.organizadorNome || evento.nomeOrganizador || 'Organizador nao informado' }}</span>
+              </div>
+              <div>
+                <mat-icon>groups</mat-icon>
+                <span>{{ getQuantidadeInscritos() }} / {{ evento.capacidadeParticipantes }} inscritos</span>
               </div>
             </div>
+
+            @if (evento.statusEvento === 'adiado') {
+              <div class="warning-panel">
+                <mat-icon>schedule</mat-icon>
+                <span>Este evento foi adiado. Confira o novo periodo antes de participar.</span>
+              </div>
+            }
           </mat-card-content>
         </mat-card>
 
         <mat-card class="participation-card">
           <mat-card-header>
-            <mat-card-title>Como voce deseja participar deste evento?</mat-card-title>
+            <mat-card-title>
+              @if (ehOrganizador()) {
+                Gestao do evento
+              } @else {
+                Como voce deseja participar?
+              }
+            </mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            @if (usuarioJaVinculado()) {
+            @if (ehOrganizador()) {
+              <div class="linked-state">
+                <mat-icon>admin_panel_settings</mat-icon>
+                <span>Voce e organizador deste evento.</span>
+              </div>
+              <div class="organizer-actions">
+                <button mat-flat-button type="button" [disabled]="!podeEditarEvento()" (click)="editarEvento()">
+                  <mat-icon>edit</mat-icon>
+                  Editar evento
+                </button>
+                <button mat-stroked-button type="button" class="danger-action" [disabled]="!podeCancelarEvento() || submitting" (click)="cancelarEvento()">
+                  <mat-icon>event_busy</mat-icon>
+                  Cancelar evento
+                </button>
+              </div>
+            } @else if (usuarioJaVinculado()) {
               <div class="linked-state">
                 <mat-icon>check_circle</mat-icon>
-                <span>Voce ja possui vinculo com este evento.</span>
+                <span>Voce esta inscrito como {{ getTipoLabel(relacaoAtiva()!.tipoRelacao) }}.</span>
+              </div>
+              @if (podeCancelarInscricao()) {
+                <button mat-flat-button type="button" class="danger-action" [disabled]="submitting" (click)="cancelarInscricao()">
+                  @if (submitting) {
+                    <mat-spinner diameter="18" />
+                  } @else {
+                    <mat-icon>event_busy</mat-icon>
+                  }
+                  Cancelar inscricao
+                </button>
+              }
+            } @else if (!podeInscrever()) {
+              <div class="blocked-state">
+                <mat-icon>block</mat-icon>
+                <span>{{ getInscricaoBloqueadaMessage() }}</span>
               </div>
             } @else {
               <form [formGroup]="form" (ngSubmit)="confirmarParticipacao()">
@@ -58,8 +121,8 @@
                   aria-label="Selecione o tipo de participacao"
                   class="participation-options"
                 >
-                  <mat-radio-button [value]="2">Colaborador</mat-radio-button>
-                  <mat-radio-button [value]="3">Participante</mat-radio-button>
+                  <mat-radio-button [value]="TipoRelacaoEvento.COLABORADOR">Colaborador</mat-radio-button>
+                  <mat-radio-button [value]="TipoRelacaoEvento.PARTICIPANTE">Participante</mat-radio-button>
                 </mat-radio-group>
 
                 <button mat-flat-button type="submit" [disabled]="submitting">

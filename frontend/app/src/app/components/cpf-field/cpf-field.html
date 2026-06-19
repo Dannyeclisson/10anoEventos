@@ -2,18 +2,18 @@
   <mat-label>{{ label }}</mat-label>
   <input
     matInput
-    [matDatepicker]="picker"
     [formControl]="control"
+    [errorStateMatcher]="errorStateMatcher"
+    autocomplete="off"
     inputmode="numeric"
-    maxlength="10"
-    placeholder="DD/MM/AAAA"
-    (input)="applyDateMask($event)"
+    maxlength="14"
+    placeholder="000.000.000-00"
+    (input)="applyCpfMask($event)"
     (blur)="markTouched()"
   >
-  <mat-hint>{{ hint }}</mat-hint>
-  <mat-datepicker-toggle matIconSuffix [for]="picker" />
-  <mat-datepicker #picker />
   @if (showRequiredError) {
     <mat-error>{{ requiredError }}</mat-error>
+  } @else if (showInvalidError) {
+    <mat-error>{{ invalidError }}</mat-error>
   }
 </mat-form-field>

@@ -2,15 +2,34 @@
   <div class="page-container">
     <header class="page-header">
       <span class="eyebrow">Nova agenda</span>
-      <h1>Cadastrar Evento</h1>
+      <h1>{{ editMode ? 'Editar Evento' : 'Cadastrar Evento' }}</h1>
       <p>
-        Registre um evento usando sua sessao atual
+        {{ editMode ? 'Atualize os dados do evento usando sua sessao atual' : 'Registre um evento usando sua sessao atual' }}
         @if (usuarioNome) {
           como {{ usuarioNome }}
         }.
       </p>
     </header>
 
+    @if (loadingEvento) {
+      <div class="feedback-panel" aria-live="polite">
+        <mat-spinner diameter="44" />
+        <p>Carregando evento...</p>
+      </div>
+    } @else if (loadErrorMessage) {
+      <div class="feedback-panel" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ loadErrorMessage }}</p>
+        <div class="form-actions">
+          <button mat-stroked-button type="button" (click)="retryLoadEvento()">
+            Tentar novamente
+          </button>
+          <button mat-button type="button" (click)="voltarAosEventos()">
+            Voltar aos eventos
+          </button>
+        </div>
+      </div>
+    } @else {
     <mat-card class="form-card">
       <mat-card-content>
         <form [formGroup]="form" (ngSubmit)="submit()">
@@ -39,17 +58,48 @@
               }
             </mat-form-field>
 
-            <app-date-picker-field
-              formControlName="dataEvento"
-              label="Data do evento (DD/MM/AAAA) *"
-              requiredError="Data obrigatoria"
+            <mat-form-field appearance="outline" class="full-span">
+              <mat-label>Periodo do evento</mat-label>
+              <mat-date-range-input [rangePicker]="picker">
+                <input matStartDate placeholder="Data de inicio" formControlName="dataInicio">
+                <input matEndDate placeholder="Data de fim" formControlName="dataFim">
+              </mat-date-range-input>
+              <mat-datepicker-toggle matIconSuffix [for]="picker" />
+              <mat-date-range-picker #picker />
+              @if (form.controls.dataInicio.hasError('required') || form.controls.dataFim.hasError('required')) {
+                <mat-error>Periodo obrigatorio</mat-error>
+              }
+            </mat-form-field>
+
+            <app-time-picker-field
+              formControlName="horaInicio"
+              label="Horario de inicio (HH:MM) *"
+              requiredError="Horario de inicio obrigatorio"
             />
 
             <app-time-picker-field
-              formControlName="horarioEvento"
-              label="Horario do evento (HH:MM) *"
-              requiredError="Horario obrigatorio"
+              formControlName="horaFim"
+              label="Horario de fim (HH:MM) *"
+              requiredError="Horario de fim obrigatorio"
             />
+
+            <mat-form-field appearance="outline">
+              <mat-label>Abertura das inscricoes</mat-label>
+              <input matInput type="datetime-local" formControlName="dataInicioInscricoes">
+              @if (form.controls.dataInicioInscricoes.hasError('required')) {
+                <mat-error>Abertura das inscricoes obrigatoria</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Capacidade maxima</mat-label>
+              <input matInput type="number" min="2" step="1" formControlName="capacidadeParticipantes">
+              @if (form.controls.capacidadeParticipantes.hasError('required')) {
+                <mat-error>Capacidade obrigatoria</mat-error>
+              } @else if (form.controls.capacidadeParticipantes.hasError('min') || form.controls.capacidadeParticipantes.hasError('pattern')) {
+                <mat-error>Informe um inteiro maior que 1</mat-error>
+              }
+            </mat-form-field>
 
             <p class="organizer-note">
               <mat-icon>verified_user</mat-icon>
@@ -161,13 +211,14 @@
               @if (loading) {
                 <mat-spinner diameter="18" />
               } @else {
-                <mat-icon>add_circle</mat-icon>
+                <mat-icon>{{ editMode ? 'save' : 'add_circle' }}</mat-icon>
               }
-              Cadastrar evento
+              {{ editMode ? 'Salvar alteracoes' : 'Cadastrar evento' }}
             </button>
           </div>
         </form>
       </mat-card-content>
     </mat-card>
+    }
   </div>
 </section>

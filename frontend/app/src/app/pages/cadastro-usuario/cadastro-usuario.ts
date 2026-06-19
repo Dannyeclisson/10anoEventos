@@ -12,7 +12,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { CpfFieldComponent } from '../../components/cpf-field/cpf-field';
 import { DatePickerFieldComponent } from '../../components/date-picker-field/date-picker-field';
+import { PhoneFieldComponent } from '../../components/phone-field/phone-field';
 import { UsuarioCadastroRequest } from '../../models/usuario.model';
 import { UsuarioService } from '../../services/usuario.service';
 
@@ -20,7 +22,9 @@ import { UsuarioService } from '../../services/usuario.service';
   selector: 'app-cadastro-usuario',
   standalone: true,
   imports: [
+    CpfFieldComponent,
     DatePickerFieldComponent,
+    PhoneFieldComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -90,16 +94,22 @@ export class CadastroUsuarioComponent {
       }
 
       const message = String(error.error?.message || '').toLowerCase();
-      if (message.includes('email')) {
-        return 'Este email ja esta cadastrado.';
+      if (message.includes('cpf') && message.includes('inválido')) {
+        return 'CPF inválido.';
       }
-      if (message.includes('cpf')) {
-        return 'Este CPF ja esta cadastrado.';
+      if (message.includes('cpf') && message.includes('cadastrado')) {
+        return 'CPF já cadastrado.';
+      }
+      if (message.includes('telefone') && message.includes('cadastrado')) {
+        return 'Telefone já cadastrado.';
+      }
+      if (message.includes('email') && message.includes('cadastrado')) {
+        return 'Email já cadastrado.';
       }
 
-      return error.error?.message || 'Nao foi possivel cadastrar o usuario.';
+      return 'Não foi possível cadastrar o usuário.';
     }
 
-    return 'Nao foi possivel cadastrar o usuario.';
+    return 'Não foi possível cadastrar o usuário.';
   }
 }

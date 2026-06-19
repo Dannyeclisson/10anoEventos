@@ -16,6 +16,7 @@ import { Router } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
 import { EventCardComponent } from '../../components/event-card/event-card';
 import { Evento } from '../../models/evento.model';
+import { TipoRelacaoEvento } from '../../models/usuario-evento.model';
 import { AuthService } from '../../services/auth.service';
 import { EventoService } from '../../services/evento.service';
 import { UsuarioEventoService } from '../../services/usuario-evento.service';
@@ -92,6 +93,10 @@ export class EventosComponent implements OnInit {
     return false;
   }
 
+  podeParticipar(evento: Evento): boolean {
+    return evento.statusInscricao === 'aberta' && !this.temVinculo(evento);
+  }
+
   private loadEventosComVinculo(): void {
     const usuarioAtual = this.authService.getUsuarioAtual();
     const usuario$ = usuarioAtual
@@ -113,7 +118,9 @@ export class EventosComponent implements OnInit {
       )
       .subscribe((relacoes) => {
         this.eventosComVinculo = new Set(
-          relacoes.map((relacao) => String(relacao.eventoId))
+          relacoes
+            .filter((relacao) => relacao.tipoRelacao !== TipoRelacaoEvento.CANCELADO)
+            .map((relacao) => String(relacao.eventoId))
         );
         this.cdr.markForCheck();
       });

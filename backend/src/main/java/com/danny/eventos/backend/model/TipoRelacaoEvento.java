@@ -3,9 +3,10 @@ package com.danny.eventos.backend.model;
 import java.util.Arrays;
 
 public enum TipoRelacaoEvento {
-    ORGANIZADOR(1),
+    CANCELADO(0),
+    PARTICIPANTE(1),
     COLABORADOR(2),
-    PARTICIPANTE(3);
+    ORGANIZADOR(3);
 
     private final int codigo;
 
@@ -18,9 +19,13 @@ public enum TipoRelacaoEvento {
     }
 
     public static TipoRelacaoEvento fromCodigo(Integer codigo) {
+        if (codigo == null) {
+            throw new IllegalArgumentException("Tipo de relacao e obrigatorio");
+        }
+
         return Arrays.stream(values())
                 .filter(tipo -> tipo.codigo == codigo)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Tipo de relacao invalido"));
+                .orElseThrow(() -> new IllegalArgumentException("Tipo de relacao invalido: " + codigo));
     }
 }

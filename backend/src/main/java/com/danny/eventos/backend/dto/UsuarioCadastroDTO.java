@@ -1,5 +1,6 @@
 package com.danny.eventos.backend.dto;
 
+import com.danny.eventos.backend.validation.CPFValido;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,7 +27,7 @@ public class UsuarioCadastroDTO {
     private LocalDate dataNascimento;
 
     @NotBlank(message = "CPF e obrigatorio")
-    @Size(max = 14, message = "CPF deve ter no maximo 14 caracteres")
+    @CPFValido
     private String cpf;
 
     @NotBlank(message = "Telefone e obrigatorio")

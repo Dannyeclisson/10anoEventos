@@ -39,6 +39,14 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'eventos/:id/editar',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./pages/cadastro-evento/cadastro-evento').then(
+            (component) => component.CadastroEventoComponent
+          )
+      },
+      {
         path: 'meus-eventos',
         canActivate: [authGuard],
         loadComponent: () =>

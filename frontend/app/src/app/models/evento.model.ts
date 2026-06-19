@@ -5,12 +5,28 @@ import {
 
 export type EventoId = number | string;
 
+export type StatusEvento =
+  | 'agendado'
+  | 'em_andamento'
+  | 'finalizado'
+  | 'cancelado'
+  | 'adiado';
+
+export type StatusInscricao =
+  | 'nao_aberta'
+  | 'aberta'
+  | 'encerrada'
+  | 'lotada';
+
 export interface EventoCadastroRequest {
   nome: string;
   descricao: string;
   local: string;
-  dataHora: string;
-  organizadorId: number;
+  imagemUrl?: string;
+  dataInicio: string;
+  dataFim: string;
+  dataInicioInscricoes: string;
+  capacidadeParticipantes: number;
   insumos?: InsumoEventoRequest[];
 }
 
@@ -19,11 +35,22 @@ export interface EventoResponse {
   nome: string;
   descricao: string;
   local: string;
-  dataHora: string;
+  imagemUrl?: string;
+  dataHora?: string;
+  dataInicio: string;
+  dataFim: string;
+  dataInicioInscricoes: string;
+  capacidadeParticipantes: number;
+  statusEvento: StatusEvento;
+  statusInscricao: StatusInscricao;
+  quantidadeInscritos?: number;
   organizadorId?: number;
+  nomeOrganizador?: string;
   organizadorNome?: string;
   participantes?: number;
   insumos?: InsumoEventoResponse[];
+  dataCancelamento?: string;
+  motivoCancelamento?: string;
 }
 
 export interface Evento {
@@ -37,6 +64,9 @@ export interface Evento {
   imagem: string;
   categoria: string;
   status: 'Disponivel' | 'Confirmado';
+  statusEvento?: StatusEvento;
+  statusInscricao?: StatusInscricao;
+  capacidadeParticipantes?: number;
 }
 
 export interface EventosResultado {

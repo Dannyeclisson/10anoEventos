@@ -13,7 +13,16 @@ public class EventoResponse {
     private String nome;
     private String descricao;
     private String local;
+    private String imagemUrl;
     private String dataHora;
+    private String dataInicio;
+    private String dataFim;
+    private String dataInicioInscricoes;
+    private Integer capacidadeParticipantes;
+    private String statusEvento;
+    private String statusInscricao;
+    private String dataCancelamento;
+    private String motivoCancelamento;
     private Long organizadorId;
     private String organizadorNome;
     private Long participantes;

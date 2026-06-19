@@ -44,21 +44,9 @@
               requiredError="Data obrigatoria"
             />
 
-            <mat-form-field appearance="outline">
-              <mat-label>CPF</mat-label>
-              <input matInput formControlName="cpf" autocomplete="off">
-              @if (form.controls.cpf.hasError('required')) {
-                <mat-error>CPF obrigatorio</mat-error>
-              }
-            </mat-form-field>
+            <app-cpf-field formControlName="cpf"/>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Telefone</mat-label>
-              <input matInput formControlName="telefone" autocomplete="tel">
-              @if (form.controls.telefone.hasError('required')) {
-                <mat-error>Telefone obrigatorio</mat-error>
-              }
-            </mat-form-field>
+            <app-phone-field formControlName="telefone" />
           </div>
 
           <div class="form-actions">

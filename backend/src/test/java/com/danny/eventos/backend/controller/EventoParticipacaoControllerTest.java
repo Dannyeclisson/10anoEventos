@@ -9,11 +9,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,22 +34,35 @@ class EventoParticipacaoControllerTest {
         long organizadorId = cadastrarUsuario(
                 "Organizador Evento",
                 "organizador.evento@example.com",
-                "111.222.333-44"
+                "935.411.347-80",
+                "(11) 91111-2222"
         );
         long participanteId = cadastrarUsuario(
                 "Pessoa Colaboradora",
                 "colaborador.evento@example.com",
-                "555.666.777-88"
+                "987.654.321-00",
+                "(11) 93333-4444"
         );
         Cookie authCookie = login("organizador.evento@example.com", "SenhaTeste123");
+        Cookie participanteCookie = login("colaborador.evento@example.com", "SenhaTeste123");
 
         long eventoId = criarEvento(organizadorId, authCookie);
         long insumoId = criarInsumo(eventoId, authCookie);
 
+        mockMvc.perform(get("/api/eventos/" + eventoId + "/editar").cookie(authCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(eventoId));
+
+        mockMvc.perform(get("/api/eventos/" + eventoId + "/editar").cookie(participanteCookie))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/eventos/999999/editar").cookie(authCookie))
+                .andExpect(status().isNotFound());
+
         mockMvc.perform(get("/api/eventos/" + eventoId + "/participacoes"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].usuarioId").value(organizadorId))
-                .andExpect(jsonPath("$[0].tipoRelacao").value(1))
+                .andExpect(jsonPath("$[0].tipoRelacao").value(3))
                 .andExpect(jsonPath("$[0].descricaoTipoRelacao").value("ORGANIZADOR"));
 
         mockMvc.perform(post("/api/eventos/" + eventoId + "/participacoes")
@@ -83,7 +98,8 @@ class EventoParticipacaoControllerTest {
 
         mockMvc.perform(get("/api/eventos/" + eventoId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.participantes").value(2));
+                .andExpect(jsonPath("$.participantes").value(1))
+                .andExpect(jsonPath("$.statusInscricao").value("aberta"));
 
         mockMvc.perform(post("/api/eventos/" + eventoId + "/participacoes")
                         .cookie(authCookie)
@@ -99,9 +115,28 @@ class EventoParticipacaoControllerTest {
         mockMvc.perform(delete("/api/eventos/" + eventoId + "/participacoes/" + organizadorId)
                         .cookie(authCookie))
                 .andExpect(status().isBadRequest());
+
+        mockMvc.perform(patch("/api/eventos/" + eventoId + "/cancelar")
+                        .cookie(participanteCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(patch("/api/eventos/" + eventoId + "/cancelar")
+                        .cookie(authCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "motivo": "Cancelamento de teste" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusEvento").value("cancelado"))
+                .andExpect(jsonPath("$.statusInscricao").value("encerrada"));
+
+        mockMvc.perform(get("/api/eventos/" + eventoId + "/editar").cookie(authCookie))
+                .andExpect(status().isBadRequest());
     }
 
-    private long cadastrarUsuario(String nome, String email, String cpf) throws Exception {
+    private long cadastrarUsuario(String nome, String email, String cpf, String telefone) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/usuarios")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -111,9 +146,9 @@ class EventoParticipacaoControllerTest {
                                   "senha": "SenhaTeste123",
                                   "dataNascimento": "1990-01-10",
                                   "cpf": "%s",
-                                  "telefone": "(11) 90000-0000"
+                                  "telefone": "%s"
                                 }
-                                """.formatted(nome, email, cpf)))
+                                """.formatted(nome, email, cpf, telefone)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -156,6 +191,10 @@ class EventoParticipacaoControllerTest {
     }
 
     private long criarEvento(long organizadorId, Cookie authCookie) throws Exception {
+        LocalDateTime inicio = LocalDateTime.now().plusDays(10);
+        LocalDateTime fim = inicio.plusHours(3);
+        LocalDateTime inicioInscricoes = LocalDateTime.now();
+
         MvcResult result = mockMvc.perform(post("/api/eventos")
                         .cookie(authCookie)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,12 +203,16 @@ class EventoParticipacaoControllerTest {
                                   "nome": "Evento de integracao",
                                   "descricao": "Encontro para validar participacoes",
                                   "local": "Serpro",
-                                  "dataHora": "2026-06-22T12:00:00",
+                                  "dataInicio": "%s",
+                                  "dataFim": "%s",
+                                  "dataInicioInscricoes": "%s",
+                                  "capacidadeParticipantes": 20,
                                   "organizadorId": %d
                                 }
-                                """.formatted(organizadorId)))
+                                """.formatted(inicio, fim, inicioInscricoes, organizadorId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.participantes").value(1))
+                .andExpect(jsonPath("$.participantes").value(0))
+                .andExpect(jsonPath("$.statusEvento").value("agendado"))
                 .andReturn();
 
         return extractId(result);

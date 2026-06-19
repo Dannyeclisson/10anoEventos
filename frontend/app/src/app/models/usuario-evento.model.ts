@@ -1,8 +1,13 @@
-export type TipoRelacaoEvento = 1 | 2 | 3;
+export enum TipoRelacaoEvento {
+  CANCELADO = 0,
+  PARTICIPANTE = 1,
+  COLABORADOR = 2,
+  ORGANIZADOR = 3
+}
 
 export interface ParticiparEventoRequest {
   usuarioId: number;
-  tipoRelacao: 2 | 3;
+  tipoRelacao: TipoRelacaoEvento.PARTICIPANTE | TipoRelacaoEvento.COLABORADOR;
   insumoIds?: number[];
 }
 
@@ -13,5 +18,9 @@ export interface UsuarioEventoResponse {
   usuarioId: number;
   nomeUsuario: string;
   tipoRelacao: TipoRelacaoEvento;
-  descricaoTipoRelacao: 'ORGANIZADOR' | 'COLABORADOR' | 'PARTICIPANTE';
+  descricaoTipoRelacao:
+    | 'CANCELADO'
+    | 'ORGANIZADOR'
+    | 'COLABORADOR'
+    | 'PARTICIPANTE';
 }

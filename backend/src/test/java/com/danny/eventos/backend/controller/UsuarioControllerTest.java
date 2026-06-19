@@ -35,7 +35,7 @@ class UsuarioControllerTest {
                   "email": "marina.carvalho@example.com",
                   "senha": "SenhaTeste123",
                   "dataNascimento": "1992-05-14",
-                  "cpf": "123.456.789-00",
+                  "cpf": "529.982.247-25",
                   "telefone": "(11) 98765-4321"
                 }
                 """;
@@ -48,8 +48,8 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.nome").value("Marina Carvalho"))
                 .andExpect(jsonPath("$.email").value("marina.carvalho@example.com"))
                 .andExpect(jsonPath("$.dataNascimento").value("1992-05-14"))
-                .andExpect(jsonPath("$.cpf").value("123.456.789-00"))
-                .andExpect(jsonPath("$.telefone").value("(11) 98765-4321"))
+                .andExpect(jsonPath("$.cpf").value("52998224725"))
+                .andExpect(jsonPath("$.telefone").value("11987654321"))
                 .andExpect(jsonPath("$.tipo").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist())
                 .andExpect(jsonPath("$.senhaHash").doesNotExist())
@@ -70,6 +70,66 @@ class UsuarioControllerTest {
                 .andExpect(jsonPath("$.tipo").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist())
                 .andExpect(jsonPath("$.senhaHash").doesNotExist());
+    }
+
+    @Test
+    void deveRejeitarCpfInvalido() throws Exception {
+        mockMvc.perform(post("/api/usuarios")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "CPF Invalido",
+                                  "email": "cpf.invalido@example.com",
+                                  "senha": "SenhaTeste123",
+                                  "dataNascimento": "1992-05-14",
+                                  "cpf": "111.111.111-11",
+                                  "telefone": "11981112222"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("CPF inválido"));
+    }
+
+    @Test
+    void deveRejeitarTelefoneDuplicadoMesmoComMascarasDiferentes() throws Exception {
+        cadastrarUsuarioParaTeste(
+                "Telefone Um",
+                "telefone.um@example.com",
+                "168.995.350-09",
+                "(21) 98888-7777"
+        );
+
+        mockMvc.perform(post("/api/usuarios")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "Telefone Dois",
+                                  "email": "telefone.dois@example.com",
+                                  "senha": "SenhaTeste123",
+                                  "dataNascimento": "1992-05-14",
+                                  "cpf": "862.883.667-57",
+                                  "telefone": "21988887777"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Telefone já cadastrado"));
+    }
+
+    private void cadastrarUsuarioParaTeste(String nome, String email, String cpf, String telefone) throws Exception {
+        mockMvc.perform(post("/api/usuarios")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "%s",
+                                  "email": "%s",
+                                  "senha": "SenhaTeste123",
+                                  "dataNascimento": "1992-05-14",
+                                  "cpf": "%s",
+                                  "telefone": "%s"
+                                }
+                                """.formatted(nome, email, cpf, telefone)))
+                .andExpect(status().isCreated());
     }
 
     private Cookie login(String email, String senha) throws Exception {

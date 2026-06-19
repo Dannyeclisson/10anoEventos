@@ -21,11 +21,21 @@ public class EventoRequest {
     @NotBlank(message = "Local e obrigatorio")
     private String local;
 
-    @NotBlank(message = "Data/hora e obrigatoria")
+    private String imagemUrl;
+
     private String dataHora;
 
-    @NotNull(message = "Organizador e obrigatorio")
-    private Long organizadorId;
+    @NotBlank(message = "Data de inicio e obrigatoria")
+    private String dataInicio;
+
+    @NotBlank(message = "Data de fim e obrigatoria")
+    private String dataFim;
+
+    @NotBlank(message = "Data de inicio das inscricoes e obrigatoria")
+    private String dataInicioInscricoes;
+
+    @NotNull(message = "Capacidade de participantes e obrigatoria")
+    private Integer capacidadeParticipantes;
 
     @Valid
     private List<InsumoEventoRequestDTO> insumos;

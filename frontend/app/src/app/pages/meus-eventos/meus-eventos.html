@@ -34,18 +34,27 @@
             <mat-card-content>
               <p>{{ item.evento?.descricao || 'Detalhes disponiveis na pagina do evento.' }}</p>
               <div class="event-meta">
-                @if (item.evento?.dataHora) {
+                @if (item.evento?.dataInicio) {
                   <span>
                     <mat-icon>calendar_today</mat-icon>
-                    {{ item.evento?.dataHora | date: 'dd MMM yyyy, HH:mm' }}
+                    {{ item.evento?.dataInicio | date: 'dd MMM yyyy, HH:mm' }}
                   </span>
                 }
                 <span>
                   <mat-icon>badge</mat-icon>
                   {{ item.relacao.nomeUsuario }}
                 </span>
+                @if (item.evento) {
+                  <span>
+                    <mat-icon>groups</mat-icon>
+                    {{ getQuantidadeInscritos(item.evento) }} / {{ item.evento.capacidadeParticipantes }}
+                  </span>
+                }
               </div>
-              <mat-chip>{{ getTipoLabel(item.relacao.tipoRelacao) }}</mat-chip>
+              <div class="chip-row">
+                <mat-chip>{{ getTipoLabel(item.relacao.tipoRelacao) }}</mat-chip>
+                <mat-chip>{{ getStatusEventoLabel(item.evento) }}</mat-chip>
+              </div>
             </mat-card-content>
 
             <mat-card-actions align="end">

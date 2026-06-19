@@ -1,13 +1,16 @@
 package com.danny.eventos.backend.service;
 
+import com.danny.eventos.backend.dto.CancelarInscricaoRequestDTO;
 import com.danny.eventos.backend.dto.ParticiparEventoRequestDTO;
 import com.danny.eventos.backend.dto.UsuarioEventoResponseDTO;
 import com.danny.eventos.backend.exception.ResourceNotFoundException;
 import com.danny.eventos.backend.model.Evento;
+import com.danny.eventos.backend.model.StatusInscricao;
 import com.danny.eventos.backend.model.TipoRelacaoEvento;
 import com.danny.eventos.backend.model.Usuario;
 import com.danny.eventos.backend.model.UsuarioEvento;
 import com.danny.eventos.backend.repository.EventoRepository;
+import com.danny.eventos.backend.repository.InsumoEventoRepository;
 import com.danny.eventos.backend.repository.UsuarioEventoRepository;
 import com.danny.eventos.backend.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
@@ -22,17 +25,23 @@ public class UsuarioEventoService {
     private final EventoRepository eventoRepository;
     private final UsuarioRepository usuarioRepository;
     private final InsumoEventoService insumoEventoService;
+    private final InsumoEventoRepository insumoEventoRepository;
+    private final EventoStatusService eventoStatusService;
 
     public UsuarioEventoService(
             UsuarioEventoRepository repository,
             EventoRepository eventoRepository,
             UsuarioRepository usuarioRepository,
-            InsumoEventoService insumoEventoService
+            InsumoEventoService insumoEventoService,
+            InsumoEventoRepository insumoEventoRepository,
+            EventoStatusService eventoStatusService
     ) {
         this.repository = repository;
         this.eventoRepository = eventoRepository;
         this.usuarioRepository = usuarioRepository;
         this.insumoEventoService = insumoEventoService;
+        this.insumoEventoRepository = insumoEventoRepository;
+        this.eventoStatusService = eventoStatusService;
     }
 
     @Transactional
@@ -44,7 +53,7 @@ public class UsuarioEventoService {
         UsuarioEvento relacao = UsuarioEvento.builder()
                 .evento(evento)
                 .usuario(usuario)
-                .tipoRelacao(TipoRelacaoEvento.ORGANIZADOR.getCodigo())
+                .tipoRelacao(TipoRelacaoEvento.ORGANIZADOR)
                 .build();
 
         return toResponse(repository.save(relacao));
@@ -53,11 +62,17 @@ public class UsuarioEventoService {
     @Transactional
     public UsuarioEventoResponseDTO participarEvento(Long eventoId, ParticiparEventoRequestDTO request) {
         TipoRelacaoEvento tipo = TipoRelacaoEvento.fromCodigo(request.getTipoRelacao());
-        if (tipo == TipoRelacaoEvento.ORGANIZADOR) {
-            throw new IllegalArgumentException("Organizador e definido apenas na criacao do evento");
+        if (tipo == TipoRelacaoEvento.ORGANIZADOR || tipo == TipoRelacaoEvento.CANCELADO) {
+            throw new IllegalArgumentException("Tipo de relacao nao permitido para inscricao");
         }
 
         Evento evento = buscarEvento(eventoId);
+        eventoStatusService.atualizarStatusCalculado(evento);
+
+        if (evento.getStatusInscricao() != StatusInscricao.ABERTA) {
+            throw new IllegalArgumentException("Inscricoes nao estao abertas para este evento");
+        }
+
         Usuario usuario = buscarUsuario(request.getUsuarioId());
 
         if (repository.existsByEventoIdAndUsuarioId(eventoId, request.getUsuarioId())) {
@@ -71,10 +86,13 @@ public class UsuarioEventoService {
         UsuarioEvento relacao = UsuarioEvento.builder()
                 .evento(evento)
                 .usuario(usuario)
-                .tipoRelacao(tipo.getCodigo())
+                .tipoRelacao(tipo)
                 .build();
 
-        return toResponse(repository.save(relacao));
+        UsuarioEvento salvo = repository.save(relacao);
+        eventoStatusService.atualizarStatusCalculado(evento);
+
+        return toResponse(salvo);
     }
 
     public List<UsuarioEventoResponseDTO> listarRelacoesPorEvento(Long eventoId) {
@@ -104,11 +122,43 @@ public class UsuarioEventoService {
         UsuarioEvento relacao = repository.findByEventoIdAndUsuarioId(eventoId, usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vinculo do usuario com o evento nao encontrado"));
 
-        if (TipoRelacaoEvento.fromCodigo(relacao.getTipoRelacao()) == TipoRelacaoEvento.ORGANIZADOR) {
+        if (relacao.getTipoRelacao() == TipoRelacaoEvento.ORGANIZADOR) {
             throw new IllegalArgumentException("Organizador nao pode ser removido por este endpoint");
         }
 
-        repository.delete(relacao);
+        cancelarRelacao(relacao);
+        eventoStatusService.atualizarStatusCalculado(relacao.getEvento());
+    }
+
+    @Transactional
+    public UsuarioEventoResponseDTO cancelarInscricao(Long eventoId, CancelarInscricaoRequestDTO request) {
+        UsuarioEvento relacao = repository.findByEventoIdAndUsuarioId(eventoId, request.getUsuarioId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vinculo do usuario com o evento nao encontrado"));
+
+        if (relacao.getTipoRelacao() == TipoRelacaoEvento.ORGANIZADOR) {
+            throw new IllegalArgumentException("Organizador nao pode cancelar inscricao por este endpoint");
+        }
+
+        if (relacao.getTipoRelacao() == TipoRelacaoEvento.CANCELADO) {
+            throw new IllegalArgumentException("Inscricao ja esta cancelada");
+        }
+
+        UsuarioEvento cancelada = cancelarRelacao(relacao);
+        eventoStatusService.atualizarStatusCalculado(cancelada.getEvento());
+
+        return toResponse(cancelada);
+    }
+
+    private UsuarioEvento cancelarRelacao(UsuarioEvento relacao) {
+        if (relacao.getTipoRelacao() == TipoRelacaoEvento.COLABORADOR) {
+            insumoEventoRepository.removerResponsavelPorEventoEUsuario(
+                    relacao.getEvento().getId(),
+                    relacao.getUsuario().getId()
+            );
+        }
+
+        relacao.setTipoRelacao(TipoRelacaoEvento.CANCELADO);
+        return repository.save(relacao);
     }
 
     private Evento buscarEvento(Long eventoId) {
@@ -122,7 +172,7 @@ public class UsuarioEventoService {
     }
 
     private UsuarioEventoResponseDTO toResponse(UsuarioEvento relacao) {
-        TipoRelacaoEvento tipo = TipoRelacaoEvento.fromCodigo(relacao.getTipoRelacao());
+        TipoRelacaoEvento tipo = relacao.getTipoRelacao();
 
         return UsuarioEventoResponseDTO.builder()
                 .id(relacao.getId())

@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,8 +93,8 @@ class InsumoEventoControllerTest {
                                   "email": "organizador.insumos@example.com",
                                   "senha": "SenhaTeste123",
                                   "dataNascimento": "1990-01-10",
-                                  "cpf": "222.333.444-55",
-                                  "telefone": "(11) 90000-0000"
+                                  "cpf": "123.456.789-09",
+                                  "telefone": "(11) 95555-6666"
                                 }
                                 """))
                 .andExpect(status().isCreated())
@@ -118,6 +119,10 @@ class InsumoEventoControllerTest {
     }
 
     private long criarEventoComInsumos(long organizadorId, Cookie authCookie) throws Exception {
+        LocalDateTime inicio = LocalDateTime.now().plusDays(10);
+        LocalDateTime fim = inicio.plusHours(3);
+        LocalDateTime inicioInscricoes = LocalDateTime.now();
+
         MvcResult result = mockMvc.perform(post("/api/eventos")
                         .cookie(authCookie)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -126,7 +131,10 @@ class InsumoEventoControllerTest {
                                   "nome": "Evento com insumos",
                                   "descricao": "Evento para validar lista de insumos",
                                   "local": "Serpro",
-                                  "dataHora": "2026-06-22T12:00:00",
+                                  "dataInicio": "%s",
+                                  "dataFim": "%s",
+                                  "dataInicioInscricoes": "%s",
+                                  "capacidadeParticipantes": 20,
                                   "organizadorId": %d,
                                   "insumos": [
                                     {
@@ -147,7 +155,7 @@ class InsumoEventoControllerTest {
                                     }
                                   ]
                                 }
-                                """.formatted(organizadorId)))
+                                """.formatted(inicio, fim, inicioInscricoes, organizadorId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.insumos[0].nome").value("Agua mineral"))
                 .andExpect(jsonPath("$.insumos[1].nome").value("Cadeiras"))

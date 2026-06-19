@@ -1,5 +1,7 @@
 package com.danny.eventos.backend.controller;
 
+import com.danny.eventos.backend.dto.CancelarEventoRequestDTO;
+import com.danny.eventos.backend.dto.CancelarInscricaoRequestDTO;
 import com.danny.eventos.backend.dto.EventoRequest;
 import com.danny.eventos.backend.dto.EventoResponse;
 import com.danny.eventos.backend.dto.InsumoEventoRequestDTO;
@@ -9,17 +11,20 @@ import com.danny.eventos.backend.dto.UsuarioEventoResponseDTO;
 import com.danny.eventos.backend.service.EventoService;
 import com.danny.eventos.backend.service.InsumoEventoService;
 import com.danny.eventos.backend.service.UsuarioEventoService;
+import com.danny.eventos.backend.model.Usuario;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
@@ -42,8 +47,11 @@ public class EventoController {
     }
 
     @PostMapping
-    public EventoResponse criar(@Valid @RequestBody EventoRequest request) {
-        return service.salvar(request);
+    public EventoResponse criar(
+            @Valid @RequestBody EventoRequest request,
+            @AuthenticationPrincipal Usuario usuarioAutenticado
+    ) {
+        return service.salvar(request, usuarioAutenticado.getId());
     }
 
     @GetMapping
@@ -54,6 +62,32 @@ public class EventoController {
     @GetMapping("/{id}")
     public EventoResponse buscarPorId(@PathVariable Long id) {
         return service.buscarPorId(id);
+    }
+
+    @GetMapping("/{id}/editar")
+    public EventoResponse buscarParaEdicao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioAutenticado
+    ) {
+        return service.buscarParaEdicao(id, usuarioAutenticado.getId());
+    }
+
+    @PutMapping("/{id}")
+    public EventoResponse atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody EventoRequest request,
+            @AuthenticationPrincipal Usuario usuarioAutenticado
+    ) {
+        return service.atualizar(id, request, usuarioAutenticado.getId());
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    public EventoResponse cancelar(
+            @PathVariable Long id,
+            @Valid @RequestBody CancelarEventoRequestDTO request,
+            @AuthenticationPrincipal Usuario usuarioAutenticado
+    ) {
+        return service.cancelar(id, request, usuarioAutenticado.getId());
     }
 
     @PostMapping("/{eventoId}/participacoes")
@@ -69,6 +103,14 @@ public class EventoController {
     @GetMapping("/{eventoId}/participacoes")
     public List<UsuarioEventoResponseDTO> listarParticipacoes(@PathVariable Long eventoId) {
         return usuarioEventoService.listarRelacoesPorEvento(eventoId);
+    }
+
+    @PatchMapping("/{eventoId}/inscricao/cancelar")
+    public UsuarioEventoResponseDTO cancelarInscricao(
+            @PathVariable Long eventoId,
+            @Valid @RequestBody CancelarInscricaoRequestDTO request
+    ) {
+        return usuarioEventoService.cancelarInscricao(eventoId, request);
     }
 
     @DeleteMapping("/{eventoId}/participacoes/{usuarioId}")

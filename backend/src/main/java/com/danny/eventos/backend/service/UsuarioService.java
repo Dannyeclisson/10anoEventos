@@ -5,6 +5,7 @@ import com.danny.eventos.backend.dto.UsuarioResponseDTO;
 import com.danny.eventos.backend.exception.ResourceNotFoundException;
 import com.danny.eventos.backend.model.Usuario;
 import com.danny.eventos.backend.repository.UsuarioRepository;
+import com.danny.eventos.backend.validation.CpfValidator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,21 +34,33 @@ public class UsuarioService {
     }
 
     public UsuarioResponseDTO cadastrar(UsuarioCadastroDTO request) {
-        if (repository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email ja cadastrado");
+        String email = request.getEmail().trim().toLowerCase();
+        String cpf = CpfValidator.somenteDigitos(request.getCpf());
+        String telefone = somenteDigitos(request.getTelefone());
+
+        if (telefone.isBlank()) {
+            throw new IllegalArgumentException("Telefone é obrigatório");
         }
 
-        if (repository.existsByCpf(request.getCpf())) {
-            throw new IllegalArgumentException("CPF ja cadastrado");
+        if (repository.existsByEmailIgnoreCase(email)) {
+            throw new IllegalArgumentException("Email já cadastrado");
+        }
+
+        if (repository.existsByCpf(cpf)) {
+            throw new IllegalArgumentException("CPF já cadastrado");
+        }
+
+        if (repository.existsByTelefone(telefone)) {
+            throw new IllegalArgumentException("Telefone já cadastrado");
         }
 
         Usuario usuario = Usuario.builder()
                 .nome(request.getNome())
-                .email(request.getEmail())
+                .email(email)
                 .senhaHash(passwordEncoder.encode(request.getSenha()))
                 .dataNascimento(request.getDataNascimento())
-                .cpf(request.getCpf())
-                .telefone(request.getTelefone())
+                .cpf(cpf)
+                .telefone(telefone)
                 .build();
 
         Usuario salvo = repository.save(usuario);
@@ -67,5 +80,9 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
 
         return toResponse(usuario);
+    }
+
+    private String somenteDigitos(String valor) {
+        return valor == null ? "" : valor.replaceAll("\\D", "");
     }
 }

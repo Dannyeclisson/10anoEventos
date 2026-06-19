@@ -34,6 +34,46 @@
   line-height: 1.7;
 }
 
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.status-chip {
+  font-weight: 700;
+}
+
+.status-cancelado,
+.inscricao-encerrada,
+.inscricao-lotada {
+  --mdc-chip-elevated-container-color: #fff0f0;
+  --mdc-chip-label-text-color: #a32f2f;
+}
+
+.status-adiado,
+.inscricao-nao_aberta {
+  --mdc-chip-elevated-container-color: #fff8e8;
+  --mdc-chip-label-text-color: #8a5800;
+}
+
+.status-agendado,
+.inscricao-aberta {
+  --mdc-chip-elevated-container-color: #edf6ff;
+  --mdc-chip-label-text-color: #1d5f95;
+}
+
+.status-em_andamento {
+  --mdc-chip-elevated-container-color: #ecfff7;
+  --mdc-chip-label-text-color: #17704a;
+}
+
+.status-finalizado {
+  --mdc-chip-elevated-container-color: #f0f2f7;
+  --mdc-chip-label-text-color: #556070;
+}
+
 .detail-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
@@ -66,14 +106,47 @@ mat-card {
   color: var(--app-primary);
 }
 
+.warning-panel,
+.blocked-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid #f0d79c;
+  border-radius: 8px;
+  background: #fff9eb;
+  color: #7a5200;
+}
+
+.blocked-state {
+  margin-top: 0;
+  border-color: var(--app-border);
+  background: var(--app-surface-soft);
+  color: var(--app-text-muted);
+}
+
 .participation-card form {
   display: grid;
   gap: 18px;
 }
 
+.organizer-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .participation-options {
   display: grid;
   gap: 10px;
+}
+
+.danger-action {
+  --mdc-filled-button-container-color: #fff0f0;
+  --mdc-filled-button-label-text-color: #a32f2f;
+  --mdc-outlined-button-label-text-color: #a32f2f;
+  --mdc-outlined-button-outline-color: #f0b8b8;
 }
 
 .supplies-card,

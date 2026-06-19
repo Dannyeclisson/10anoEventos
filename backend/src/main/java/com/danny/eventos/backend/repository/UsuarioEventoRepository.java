@@ -1,8 +1,10 @@
 package com.danny.eventos.backend.repository;
 
 import com.danny.eventos.backend.model.UsuarioEvento;
+import com.danny.eventos.backend.model.TipoRelacaoEvento;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,5 +18,5 @@ public interface UsuarioEventoRepository extends JpaRepository<UsuarioEvento, Lo
 
     List<UsuarioEvento> findByEventoId(Long eventoId);
 
-    long countByEventoId(Long eventoId);
+    long countByEventoIdAndTipoRelacaoIn(Long eventoId, Collection<TipoRelacaoEvento> tipos);
 }
