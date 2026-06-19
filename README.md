@@ -1,123 +1,92 @@
 # 10anoEventos
 
-Aplicacao full stack para gerenciamento de eventos, organizada como um monorepo com backend Spring Boot, frontend Angular e infraestrutura local com PostgreSQL via Docker Compose.
+Aplicação full stack para gerenciamento de eventos, usuários, inscrições, participações e insumos. O projeto está organizado como um monorepo com backend Spring Boot, frontend Angular e PostgreSQL via Docker Compose.
 
-## Visao Geral
-
-O repositorio esta dividido assim:
+## Visão geral
 
 ```text
-backend/              API REST em Java 21 com Spring Boot 4, JPA e PostgreSQL
-frontend/app/         Aplicacao Angular 21
-infra/docker/         Docker Compose do banco PostgreSQL
+backend/              API REST em Java 21 com Spring Boot
+frontend/app/         Aplicação Angular 21 com Angular Material
+infra/docker/         Docker Compose do PostgreSQL
 ```
 
-Fluxo esperado em desenvolvimento:
+Fluxo local de desenvolvimento:
 
-1. Subir o PostgreSQL local.
-2. Rodar o backend em `http://localhost:8080`.
-3. Rodar o frontend em `http://localhost:4200`.
-4. O frontend consome a API de eventos em `http://localhost:8080/api/eventos`.
+1. Subir o PostgreSQL.
+2. Iniciar o backend em `http://localhost:8080`.
+3. Iniciar o frontend em `http://localhost:4200`.
+4. Consultar e testar a API pela documentação Swagger.
 
 ## Tecnologias
 
 - Java 21
 - Spring Boot 4.0.4
 - Spring Web MVC
+- Spring Security com JWT em cookie HttpOnly
 - Spring Data JPA
+- Springdoc OpenAPI e Swagger UI
 - PostgreSQL 15
-- Maven Wrapper
-- Angular 21
+- Maven
+- Angular 21 e Angular Material
 - npm 11
-- Docker / Docker Compose
+- Docker e Docker Compose
 
-Ambiente local usado na validacao deste README:
-
-- Java `21`
-- Node `v22.17.0`
-- npm `11.10.1`
-- Docker `29.2.1`
-
-## Pre-requisitos
-
-Instale antes de rodar:
+## Pré-requisitos
 
 - Java 21
-- Node.js compativel com Angular 21
+- Node.js compatível com Angular 21
 - npm
 - Docker Desktop ou Docker Engine com Docker Compose
 
-Nao e necessario instalar Maven globalmente, porque o backend inclui Maven Wrapper (`mvnw` e `mvnw.cmd`).
+O backend inclui Maven Wrapper (`mvnw` e `mvnw.cmd`), portanto uma instalação global do Maven é opcional.
 
-## Como Rodar
+## Como rodar
 
-Execute os comandos a partir da raiz do repositorio.
+Execute os comandos a partir da raiz do repositório.
 
-### 1. Subir o banco de dados
+### Banco de dados
 
 ```powershell
 docker compose -f infra/docker/docker-compose.yml up -d
 ```
 
-O Compose cria um PostgreSQL com:
+Configuração local padrão:
 
 ```text
 host: localhost
 porta: 5432
 banco: eventos_db
-usuario: eventos_user
+usuário: eventos_user
 senha: eventos_pass
 ```
 
-Esses valores precisam bater com `backend/src/main/resources/application.yml`, que hoje ja esta configurado para esse banco.
-
-Para parar o banco:
+Para encerrar o banco:
 
 ```powershell
 docker compose -f infra/docker/docker-compose.yml down
 ```
 
-Para parar e remover tambem o volume com os dados:
+Antes de aplicar migrations em uma base existente, revise possíveis duplicidades indicadas pelos scripts em `backend/src/main/resources/db/migration`.
 
-```powershell
-docker compose -f infra/docker/docker-compose.yml down -v
-```
+### Backend
 
-### 2. Rodar o backend
-
-No Windows:
+Windows:
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-No Linux/macOS:
+Linux/macOS:
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
-A API sobe em:
+O backend fica disponível em `http://localhost:8080`.
 
-```text
-http://localhost:8080
-```
-
-Endpoint simples para testar:
-
-```text
-GET http://localhost:8080/api/test
-```
-
-Resposta esperada:
-
-```text
-API funcionando
-```
-
-### 3. Rodar o frontend
+### Frontend
 
 Em outro terminal:
 
@@ -127,13 +96,40 @@ npm ci
 npm start
 ```
 
-O Angular sobe em:
+O frontend fica disponível em `http://localhost:4200`.
+
+## Documentação da API
+
+Após iniciar o backend, a documentação interativa está disponível em:
 
 ```text
-http://localhost:4200
+http://localhost:8080/swagger-ui/index.html
 ```
 
-## Scripts Uteis
+Especificação OpenAPI em JSON:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+Especificação OpenAPI em YAML:
+
+```text
+http://localhost:8080/v3/api-docs.yaml
+```
+
+As rotas protegidas exigem uma sessão ativa. Na Swagger UI, execute primeiro `POST /api/auth/login`; o backend define o JWT em cookie HttpOnly e o navegador o envia nas chamadas seguintes para o mesmo host.
+
+A documentação está organizada nas tags:
+
+- Autenticação
+- Usuários
+- Eventos
+- Participações / Inscrições
+- Insumos
+- Testes
+
+## Comandos úteis
 
 Backend:
 
@@ -154,139 +150,9 @@ npm run build
 npm test
 ```
 
-## Endpoints da API
+## Observações
 
-### Teste
-
-```text
-GET /api/test
-```
-
-### Usuarios
-
-```text
-GET  /api/usuarios
-POST /api/usuarios
-```
-
-Payload para criar usuario:
-
-```json
-{
-  "nome": "Maria Organizadora",
-  "email": "maria@example.com",
-  "tipo": "ORGANIZADOR"
-}
-```
-
-Valores aceitos em `tipo`:
-
-```text
-ORGANIZADOR
-PARTICIPANTE
-COLABORADOR
-```
-
-### Eventos
-
-```text
-GET  /api/eventos
-POST /api/eventos
-```
-
-Payload para criar evento:
-
-```json
-{
-  "nome": "Workshop de Tecnologia",
-  "descricao": "Encontro sobre desenvolvimento full stack",
-  "local": "Auditorio Central",
-  "dataHora": "2026-06-20T19:30:00",
-  "organizadorId": 1
-}
-```
-
-Importante: `organizadorId` precisa apontar para um usuario ja existente. O backend converte `dataHora` com `LocalDateTime.parse`, entao use formato ISO local, como `2026-06-20T19:30:00`.
-
-## Exemplos Rapidos com PowerShell
-
-Criar um organizador:
-
-```powershell
-Invoke-RestMethod `
-  -Method Post `
-  -Uri http://localhost:8080/api/usuarios `
-  -ContentType "application/json" `
-  -Body '{"nome":"Maria Organizadora","email":"maria@example.com","tipo":"ORGANIZADOR"}'
-```
-
-Criar um evento para o organizador `1`:
-
-```powershell
-Invoke-RestMethod `
-  -Method Post `
-  -Uri http://localhost:8080/api/eventos `
-  -ContentType "application/json" `
-  -Body '{"nome":"Workshop de Tecnologia","descricao":"Encontro sobre desenvolvimento full stack","local":"Auditorio Central","dataHora":"2026-06-20T19:30:00","organizadorId":1}'
-```
-
-Listar eventos:
-
-```powershell
-Invoke-RestMethod http://localhost:8080/api/eventos
-```
-
-## Estado Atual do Frontend
-
-O projeto Angular ainda esta majoritariamente no template inicial gerado pelo Angular CLI.
-
-Ja existe:
-
-- `EventoService`, apontando para `http://localhost:8080/api/eventos`
-- `EventosComponent`, que lista eventos retornados pela API
-
-Mas a tela de eventos ainda nao esta ligada na aplicacao principal, porque:
-
-- `app.routes.ts` esta vazio
-- `app.html` ainda contem o placeholder padrao do Angular
-- `app.config.ts` ainda nao registra `provideHttpClient()`, necessario para injetar `HttpClient` quando a tela de eventos for usada
-
-## Validacoes Feitas
-
-Comandos executados durante a analise:
-
-```text
-npm ci
-npm run build
-npm test -- --watch=false
-```
-
-Resultado:
-
-- `npm ci` concluiu com sucesso.
-- `npm run build` concluiu com sucesso e gerou `frontend/app/dist/app`.
-- `npm ci` reportou 2 vulnerabilidades moderadas via `npm audit`.
-- `npm test -- --watch=false` falhou na compilacao dos testes porque os specs importam nomes que nao existem mais:
-  - `src/app/app.spec.ts` importa `App`, mas o componente exportado e `AppComponent`.
-  - `src/app/pages/eventos/eventos.spec.ts` importa `Eventos`, mas o componente exportado e `EventosComponent`.
-
-Tambem foi executado:
-
-```text
-.\mvnw.cmd test
-```
-
-Resultado:
-
-- O backend compilou.
-- O teste `BackendApplicationTests.contextLoads` falhou ao carregar o `ApplicationContext`.
-- A causa reportada foi criacao do `entityManagerFactory` sem conseguir determinar o dialect do Hibernate via metadados JDBC.
-
-Na pratica, o teste atual depende da configuracao real do datasource PostgreSQL e nao possui um perfil de teste isolado. Para testes automatizados mais confiaveis, uma melhoria futura seria criar `src/test/resources/application-test.yml` com banco de teste, Testcontainers ou H2, e ativar esse perfil nos testes.
-
-## Observacoes de Implementacao
-
-- O backend usa `spring.jpa.hibernate.ddl-auto: update`, entao as tabelas sao criadas/atualizadas automaticamente durante o desenvolvimento.
-- CORS esta liberado para `http://localhost:4200` em `CorsConfig`.
-- A API nao possui autenticacao neste momento.
-- Os textos de validacao em alguns arquivos Java aparecem com caracteres corrompidos no codigo-fonte, por exemplo `obrigatÃ³rio`. Vale revisar a codificacao desses arquivos para UTF-8.
+- O backend usa `spring.jpa.hibernate.ddl-auto: update` no ambiente local.
+- As origens locais do Angular permitidas pelo CORS estão configuradas no backend.
+- Senhas são recebidas apenas nos DTOs de entrada e nunca aparecem nos DTOs de resposta.
+- A documentação detalhada dos endpoints é mantida pelo OpenAPI, evitando duplicação no README.

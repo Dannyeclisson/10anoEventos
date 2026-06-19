@@ -1,21 +1,21 @@
 package com.danny.eventos.backend.controller;
 
 import com.danny.eventos.backend.dto.CancelarEventoRequestDTO;
-import com.danny.eventos.backend.dto.CancelarInscricaoRequestDTO;
 import com.danny.eventos.backend.dto.EventoRequest;
 import com.danny.eventos.backend.dto.EventoResponse;
-import com.danny.eventos.backend.dto.InsumoEventoRequestDTO;
-import com.danny.eventos.backend.dto.InsumoEventoResponseDTO;
-import com.danny.eventos.backend.dto.ParticiparEventoRequestDTO;
-import com.danny.eventos.backend.dto.UsuarioEventoResponseDTO;
-import com.danny.eventos.backend.service.EventoService;
-import com.danny.eventos.backend.service.InsumoEventoService;
-import com.danny.eventos.backend.service.UsuarioEventoService;
+import com.danny.eventos.backend.exception.ErrorResponse;
 import com.danny.eventos.backend.model.Usuario;
+import com.danny.eventos.backend.service.EventoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,136 +24,128 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/eventos")
+@Tag(name = "Eventos", description = "Criação, consulta, edição e cancelamento de eventos")
 public class EventoController {
 
     private final EventoService service;
-    private final UsuarioEventoService usuarioEventoService;
-    private final InsumoEventoService insumoEventoService;
 
-    public EventoController(
-            EventoService service,
-            UsuarioEventoService usuarioEventoService,
-            InsumoEventoService insumoEventoService
-    ) {
+    public EventoController(EventoService service) {
         this.service = service;
-        this.usuarioEventoService = usuarioEventoService;
-        this.insumoEventoService = insumoEventoService;
     }
 
     @PostMapping
+    @Operation(
+            summary = "Criar evento",
+            description = "Cria um evento, define os status iniciais, registra o usuário autenticado como organizador e aceita insumos no payload."
+    )
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Evento criado"),
+            @ApiResponse(responseCode = "400", description = "Dados ou datas inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public EventoResponse criar(
             @Valid @RequestBody EventoRequest request,
-            @AuthenticationPrincipal Usuario usuarioAutenticado
+            @Parameter(hidden = true) @AuthenticationPrincipal Usuario usuarioAutenticado
     ) {
         return service.salvar(request, usuarioAutenticado.getId());
     }
 
     @GetMapping
+    @Operation(summary = "Listar eventos", description = "Lista os eventos com seus status e quantidade de participantes ativos.")
+    @ApiResponse(responseCode = "200", description = "Eventos retornados")
     public List<EventoResponse> listar() {
         return service.listar();
     }
 
     @GetMapping("/{id}")
-    public EventoResponse buscarPorId(@PathVariable Long id) {
+    @Operation(summary = "Consultar detalhes do evento", description = "Retorna evento, organizador, status, participantes e insumos.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Evento encontrado"),
+            @ApiResponse(responseCode = "404", description = "Evento não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public EventoResponse buscarPorId(
+            @Parameter(description = "Identificador do evento", example = "1") @PathVariable Long id
+    ) {
         return service.buscarPorId(id);
     }
 
     @GetMapping("/{id}/editar")
+    @Operation(summary = "Carregar evento para edição", description = "Retorna os dados editáveis somente ao organizador do evento.")
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados para edição retornados"),
+            @ApiResponse(responseCode = "400", description = "Evento cancelado ou finalizado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Usuário não é o organizador",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Evento não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public EventoResponse buscarParaEdicao(
-            @PathVariable Long id,
-            @AuthenticationPrincipal Usuario usuarioAutenticado
+            @Parameter(description = "Identificador do evento", example = "1") @PathVariable Long id,
+            @Parameter(hidden = true) @AuthenticationPrincipal Usuario usuarioAutenticado
     ) {
         return service.buscarParaEdicao(id, usuarioAutenticado.getId());
     }
 
     @PutMapping("/{id}")
+    @Operation(
+            summary = "Atualizar evento",
+            description = "Atualiza o evento somente para o organizador. Alterações de data ou horário definem o status como adiado."
+    )
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Evento atualizado"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou evento não editável",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Usuário não é o organizador",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Evento não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public EventoResponse atualizar(
-            @PathVariable Long id,
+            @Parameter(description = "Identificador do evento", example = "1") @PathVariable Long id,
             @Valid @RequestBody EventoRequest request,
-            @AuthenticationPrincipal Usuario usuarioAutenticado
+            @Parameter(hidden = true) @AuthenticationPrincipal Usuario usuarioAutenticado
     ) {
         return service.atualizar(id, request, usuarioAutenticado.getId());
     }
 
     @PatchMapping("/{id}/cancelar")
+    @Operation(
+            summary = "Cancelar evento",
+            description = "Cancela um evento do organizador autenticado e encerra as inscrições. Eventos finalizados não podem ser cancelados."
+    )
+    @SecurityRequirement(name = "cookieAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Evento cancelado"),
+            @ApiResponse(responseCode = "400", description = "Evento já cancelado ou finalizado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Usuário não é o organizador",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Evento não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public EventoResponse cancelar(
-            @PathVariable Long id,
+            @Parameter(description = "Identificador do evento", example = "1") @PathVariable Long id,
             @Valid @RequestBody CancelarEventoRequestDTO request,
-            @AuthenticationPrincipal Usuario usuarioAutenticado
+            @Parameter(hidden = true) @AuthenticationPrincipal Usuario usuarioAutenticado
     ) {
         return service.cancelar(id, request, usuarioAutenticado.getId());
-    }
-
-    @PostMapping("/{eventoId}/participacoes")
-    public ResponseEntity<UsuarioEventoResponseDTO> participar(
-            @PathVariable Long eventoId,
-            @Valid @RequestBody ParticiparEventoRequestDTO request
-    ) {
-        UsuarioEventoResponseDTO relacao = usuarioEventoService.participarEvento(eventoId, request);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(relacao);
-    }
-
-    @GetMapping("/{eventoId}/participacoes")
-    public List<UsuarioEventoResponseDTO> listarParticipacoes(@PathVariable Long eventoId) {
-        return usuarioEventoService.listarRelacoesPorEvento(eventoId);
-    }
-
-    @PatchMapping("/{eventoId}/inscricao/cancelar")
-    public UsuarioEventoResponseDTO cancelarInscricao(
-            @PathVariable Long eventoId,
-            @Valid @RequestBody CancelarInscricaoRequestDTO request
-    ) {
-        return usuarioEventoService.cancelarInscricao(eventoId, request);
-    }
-
-    @DeleteMapping("/{eventoId}/participacoes/{usuarioId}")
-    public ResponseEntity<Void> removerParticipacao(
-            @PathVariable Long eventoId,
-            @PathVariable Long usuarioId
-    ) {
-        usuarioEventoService.removerRelacao(eventoId, usuarioId);
-
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/{eventoId}/insumos")
-    public List<InsumoEventoResponseDTO> listarInsumos(@PathVariable Long eventoId) {
-        return insumoEventoService.listarPorEvento(eventoId);
-    }
-
-    @PostMapping("/{eventoId}/insumos")
-    public ResponseEntity<InsumoEventoResponseDTO> adicionarInsumo(
-            @PathVariable Long eventoId,
-            @Valid @RequestBody InsumoEventoRequestDTO request
-    ) {
-        InsumoEventoResponseDTO insumo = insumoEventoService.adicionarInsumo(eventoId, request);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(insumo);
-    }
-
-    @PutMapping("/{eventoId}/insumos/{insumoId}")
-    public InsumoEventoResponseDTO atualizarInsumo(
-            @PathVariable Long eventoId,
-            @PathVariable Long insumoId,
-            @Valid @RequestBody InsumoEventoRequestDTO request
-    ) {
-        return insumoEventoService.atualizarInsumo(eventoId, insumoId, request);
-    }
-
-    @DeleteMapping("/{eventoId}/insumos/{insumoId}")
-    public ResponseEntity<Void> removerInsumo(
-            @PathVariable Long eventoId,
-            @PathVariable Long insumoId
-    ) {
-        insumoEventoService.removerInsumo(eventoId, insumoId);
-
-        return ResponseEntity.noContent().build();
     }
 }
